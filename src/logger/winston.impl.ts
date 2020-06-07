@@ -107,10 +107,13 @@ const logger = winston.createLogger({
       ignoreLevels: ['error'],
     }),
     new winston.transports.Console({ level: 'info' }),
-    createFileTransport('access.log', 'http', { levelsOnly: true }),
     createFileTransport('verbose.log', 'verbose', { levelsOnly: true }),
   ],
 });
+
+if (logConf?.ACCESS_LOG) {
+  logger.add(createFileTransport('access.log', 'http', { levelsOnly: true }));
+}
 
 //
 // If we're not in production then log to the console,
