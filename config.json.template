@@ -1,0 +1,19 @@
+{
+    "cluster": {
+        "APP_WORKER_COUNT": 2 
+    },
+    "server": {
+        "HTTP2_SERVER": true,
+        "HTTP2_HOST": "localhost",
+        "HTTP2_PORT": 3443,
+        "HTTP2_ALLOW_HTTP1": true,
+        "HTTP_HOST": "localhost",
+        "HTTP_PORT": 8081,
+        "CERT_FILE": "/certificate_path.pem",
+        "CERT_KEY_FILE": "/certificate_key_path.key"
+    },
+    "log": {
+        "ACCESS_LOG": true,
+        "LOG_MAX_FILES": "14d"
+    }
+}
