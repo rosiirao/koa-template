@@ -1,4 +1,4 @@
-import app from './app';
+import startApp from './app';
 import fs from 'fs';
 
 import config from 'config';
@@ -31,20 +31,24 @@ const httpProtocol = http2Enabled ? 'https' : 'http';
 
 const httpModule = import(http2Enabled ? 'http2' : 'http');
 
-const server = httpModule.then((http_) =>
-  http2Enabled
-    ? http_.createSecureServer(options, app.callback())
-    : http_.createServer(app.callback())
-);
-
 import { Server } from 'http';
-export const startServer = (server: Server): void => {
-  server.listen({
-    port: PORT,
-    host: HOSTNAME,
-  });
+export const startServer = (): Promise<Server> => {
+  const app = startApp();
+  const server: Promise<Server> = httpModule
+    .then((http_) =>
+      http2Enabled
+        ? http_.createSecureServer(options, app.callback())
+        : http_.createServer(app.callback())
+    )
+    .then((server) => {
+      server.listen({
+        port: PORT,
+        host: HOSTNAME,
+      });
+      return server;
+    });
+  return server;
 };
 
 export const serverSite = `${httpProtocol}://${HOSTNAME}:${PORT}`;
-
-export default server;
+export default startServer;

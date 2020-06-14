@@ -1,42 +1,44 @@
 import cluster from 'cluster';
-import os from 'os';
-import httpServer, { startServer, serverSite } from './server';
-
-import { logger } from './logger';
-
+import startServer, { serverSite } from './server';
+import { createLogger, addListener as addLoggerListener } from './logger';
 import config from 'config';
-const conf: {
-  APP_WORKER_COUNT?: number;
-} = config.has('cluster') && config.get('cluster');
+import debug from 'debug';
 
-const numCPUs = os.cpus().length;
-const numWorkers = Math.max(
-  conf?.APP_WORKER_COUNT ?? Math.floor(numCPUs / 2),
-  1
-);
+const appConf: {
+  NAME: string;
+} = config.has('application') && config.get('application');
+const appName = appConf?.NAME;
+
+const printDebug = debug(`${appName}:cluster`);
+printDebug;
 
 enum TER_MSG {
   QUIT,
 }
 
-if (cluster.isMaster) {
+const startMaster = (numWorkers: number): void => {
+  const logger = createLogger(true);
+
+  if (process.env.NODE_ENV !== 'production') {
+    logger.warn(`The server is not running in production environment!`);
+  }
+  if (numWorkers < 1) {
+    logger.warn(
+      'Wrong configuration of APP_WORKER_COUNT, the value is set to 1!'
+    );
+    numWorkers = 1;
+  }
+  if (appName !== undefined) {
+    process.title = appName;
+  }
+
   logger.verbose(`server start!`);
-
-  process.title = 'hello-node-master';
-
-  logger.info(`Master ${process.pid} is running`, () => {
-    console.log('Master running log finished');
-  });
+  logger.info(`Master ${process.pid} is running`);
 
   for (let i = 0; i < numWorkers; i++) {
-    const worker = cluster.fork();
-
-    worker.on('message', (m) => {
-      if (m.type === 'log') {
-        logger.verbose(m.content);
-      }
-    });
+    cluster.fork();
   }
+  addLoggerListener(...Object.values(cluster.workers));
 
   let count = 0;
   cluster.on('listening', (worker) => {
@@ -46,9 +48,10 @@ if (cluster.isMaster) {
     );
     if (count === numWorkers) {
       logger.info(`You can open ${serverSite} in the browser.`);
+      // add a prompt to wait user's command
+      process.stdout.write('> ');
     }
   });
-  // cluster.on('')
 
   cluster.on('disconnect', (worker) => {
     worker.removeAllListeners();
@@ -56,8 +59,7 @@ if (cluster.isMaster) {
   });
 
   cluster.on('exit', () => {
-    count--;
-    if (count === 0) {
+    if (Object.keys(cluster.workers).length === 0) {
       cluster.removeAllListeners();
       logger.verbose(`server exit`);
       process.nextTick(() => {
@@ -71,8 +73,10 @@ if (cluster.isMaster) {
     if (cmd in TER_MSG) {
       Object.values(cluster.workers).forEach((worker) => {
         worker.send(TER_MSG.QUIT);
-        worker.disconnect();
       });
+    } else {
+      // add a prompt to wait user's command
+      process.stdout.write('> ');
     }
   });
 
@@ -80,17 +84,15 @@ if (cluster.isMaster) {
   process.on('SIGINT', () => {
     logger.info('Master Received SIGINT.  Press Control-D to exit.');
   });
-} else {
-  httpServer.then((server) => {
-    server.on('request', () => {
-      process.send({
-        type: 'log',
-        content: `response worker id ${process.pid}`,
-      });
-    });
+};
 
-    startServer(server);
+const startWorker = () => {
+  const logger = createLogger(false);
 
+  if (appName !== undefined) {
+    process.title = `${appName}-ser`;
+  }
+  startServer().then((server) => {
     process.on('message', (m) => {
       switch (m) {
         case TER_MSG.QUIT: {
@@ -109,4 +111,14 @@ if (cluster.isMaster) {
       }
     });
   });
-}
+};
+
+const startCluster = (numWorkers: number): void => {
+  if (cluster.isMaster) {
+    startMaster(numWorkers);
+  } else {
+    startWorker();
+  }
+};
+
+export default startCluster;

@@ -1,10 +1,10 @@
-import logger from './winston.impl';
+import { getLogger, createLogger, addListener } from './winston.impl';
 import Koa from 'koa';
 import logConf from './config';
 
 const accessLog = logConf?.ACCESS_LOG;
-
 const appLogger = (app: Koa): Koa.Middleware => {
+  const logger = getLogger();
   app.on('error', (err, ctx) => {
     /* centralized error handling:
      *   console.log error
@@ -44,4 +44,4 @@ const appLogger = (app: Koa): Koa.Middleware => {
 
 export default appLogger;
 
-export { logger };
+export { getLogger, createLogger, addListener };

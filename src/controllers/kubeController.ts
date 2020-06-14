@@ -20,7 +20,6 @@ export const healthz: Router.Middleware = async function (ctx, next) {
     message;
 
   ctx.type = 'text/plain';
-  console.log(`healthStatus ${healthStatus}!`);
   if (healthStatus) {
     message = `Service is live`;
     available = 200;
@@ -30,7 +29,6 @@ export const healthz: Router.Middleware = async function (ctx, next) {
   }
   ctx.status = available;
   ctx.body = message;
-  console.log(`Set "healthz" return code to ${available}!`);
   await next();
 };
 
@@ -44,7 +42,6 @@ export const readyz: Router.Middleware = async function readyz(ctx, next) {
     message;
 
   ctx.type = 'text/plain';
-  console.log(`readyStatus ${readyStatus}!`);
   if (readyStatus) {
     message = `Service is ready to new requests`;
     available = 200;
@@ -54,7 +51,6 @@ export const readyz: Router.Middleware = async function readyz(ctx, next) {
   }
   ctx.status = available;
   ctx.body = message;
-  console.log(`Set "readyz" return code to ${available}!`);
   await next();
 };
 

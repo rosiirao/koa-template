@@ -1,4 +1,7 @@
 {
+    "application":{
+        "NAME": "koaTemplate"
+    },
     "cluster": {
         "APP_WORKER_COUNT": 2 
     },
@@ -13,7 +16,7 @@
         "CERT_KEY_FILE": "/certificate_key_path.key"
     },
     "log": {
-        "ACCESS_LOG": true,
+        "ACCESS_LOG": false,
         "LOG_MAX_FILES": "14d"
     }
 }
