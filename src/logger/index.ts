@@ -1,6 +1,7 @@
-import { getLogger, createLogger, addListener } from './winston.impl';
+// import { getLogger, createLogger, addListener } from './winston.impl';
 import Koa from 'koa';
 import logConf from './config';
+import { getLogger } from './winston.impl';
 
 const accessLog = logConf?.ACCESS_LOG;
 const appLogger = (app: Koa): Koa.Middleware => {
@@ -32,11 +33,11 @@ const appLogger = (app: Koa): Koa.Middleware => {
           ctx.get('x-real-ip') || ctx.ips.length > 0
             ? ctx.ips[ctx.ips.length - 1]
             : ctx.ip
-        } ${ctx.status}  ${ctx.request.originalUrl} ${ctx.get(
-          'content-length'
-        )} ${ctx.get('refer')} ${ctx.get('user-agent')} ${ctx.get(
-          'x-forwarded-for'
-        )} ${diff[1] / 1000000}ms`
+        } ${ctx.method} ${ctx.status}  ${ctx.request.originalUrl || '_'} ${
+          ctx.get('content-length') || '_'
+        } ${ctx.get('refer') || '_'} ${ctx.get('user-agent') || '_'} ${
+          ctx.get('x-forwarded-for') || '_'
+        } ${diff[1] / 1000000}ms`
       );
     }
   };
@@ -44,4 +45,5 @@ const appLogger = (app: Koa): Koa.Middleware => {
 
 export default appLogger;
 
-export { getLogger, createLogger, addListener };
+// export { getLogger, createLogger, addListener };
+export * from './winston.impl';

@@ -1,8 +1,8 @@
 import request from 'supertest';
-import app from '../app';
+import startApp from '../app';
 
 describe('api test', () => {
-  const appTest = request(app.callback());
+  const appTest = request(startApp().callback());
   it('kubernete status api', async () => {
     const testQueue = [
       appTest

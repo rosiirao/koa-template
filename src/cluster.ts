@@ -1,16 +1,10 @@
 import cluster from 'cluster';
 import startServer, { serverSite } from './server';
-import { createLogger, addListener as addLoggerListener } from './logger';
-import config from 'config';
-import debug from 'debug';
-
-const appConf: {
-  NAME: string;
-} = config.has('application') && config.get('application');
-const appName = appConf?.NAME;
-
-const printDebug = debug(`${appName}:cluster`);
-printDebug;
+import {
+  createLogger,
+  addListener as addLoggerListener,
+  finishLogger,
+} from './logger';
 
 enum TER_MSG {
   QUIT,
@@ -28,17 +22,14 @@ const startMaster = (numWorkers: number): void => {
     );
     numWorkers = 1;
   }
-  if (appName !== undefined) {
-    process.title = appName;
-  }
 
-  logger.verbose(`server start!`);
+  logger.info(`server start!`);
   logger.info(`Master ${process.pid} is running`);
 
   for (let i = 0; i < numWorkers; i++) {
     cluster.fork();
   }
-  addLoggerListener(...Object.values(cluster.workers));
+  addLoggerListener(undefined, ...Object.values(cluster.workers));
 
   let count = 0;
   cluster.on('listening', (worker) => {
@@ -61,8 +52,8 @@ const startMaster = (numWorkers: number): void => {
   cluster.on('exit', () => {
     if (Object.keys(cluster.workers).length === 0) {
       cluster.removeAllListeners();
-      logger.verbose(`server exit`);
-      process.nextTick(() => {
+      logger.info(`server exit!`);
+      finishLogger().then(() => {
         process.exit();
       });
     }
@@ -89,9 +80,6 @@ const startMaster = (numWorkers: number): void => {
 const startWorker = () => {
   const logger = createLogger(false);
 
-  if (appName !== undefined) {
-    process.title = `${appName}-ser`;
-  }
   startServer().then((server) => {
     process.on('message', (m) => {
       switch (m) {
