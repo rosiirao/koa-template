@@ -52,6 +52,7 @@ const startMaster = (numWorkers: number): void => {
   cluster.on('exit', () => {
     if (Object.keys(cluster.workers).length === 0) {
       cluster.removeAllListeners();
+      process.stdin.removeAllListeners();
       logger.info(`server exit!`);
       exitProcess();
     }
