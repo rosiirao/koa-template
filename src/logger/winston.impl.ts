@@ -11,26 +11,46 @@ import path from 'path';
 import logConf from './config';
 import cluster from 'cluster';
 
-const { errors, printf, timestamp, combine } = winston.format;
+const { errors, printf, combine } = winston.format;
+const errorsFormat = errors({ stack: true });
 
 type MyTransformFunction = <T extends winston.LogEntry>(
   info: T,
   opt?: DailyRotateFileTransportOptions
 ) => boolean | T;
 
+/**
+ *
+ * timestampFormatter format timestamp
+ */
+const timestampFormatter = new Intl.DateTimeFormat(['en-US', 'zh-CN'], {
+  year: '2-digit',
+  month: 'numeric',
+  day: 'numeric',
+  hour12: false,
+  hour: 'numeric',
+  minute: 'numeric',
+  second: 'numeric',
+  timeZoneName: 'short',
+});
+
+/**
+ *
+ * plainFormat format info to plain text
+ */
 const plainFormat = printf((info) => {
   const {
     level,
     pid = process.pid,
     message,
-    timestamp,
+    timestamp = timestampFormatter.format(new Date()),
     padding,
     stack,
     path,
     ...meta
   } = info;
   const paddingComputed = (padding && padding[level]) ?? ' ';
-  const printStack = [timestamp, pid, level];
+  const printStack = [pid, level];
   if (path !== undefined) {
     printStack.push(path);
   }
@@ -39,16 +59,11 @@ const plainFormat = printf((info) => {
   } else {
     printStack.push(message);
   }
-  return `${[...printStack, ...Object.values(meta).map((d) => d ?? '_')].join(
-    paddingComputed
-  )}`;
+  return `[${timestamp}]${[
+    ...printStack,
+    ...Object.values(meta).map((d) => d ?? '_'),
+  ].join(paddingComputed)}`;
 });
-
-/**
- *
- * defaultFormat with timestamp and plain text
- */
-const defaultFormat = combine(timestamp(), plainFormat);
 
 const ignoreFormatWrapper = (
   level: string,
@@ -81,17 +96,19 @@ const createFileTransport = function (
   options?: {
     ignoreLevels?: string[];
     levelsOnly?: boolean;
-    format?: typeof defaultFormat;
+    format?: ReturnType<typeof combine>;
   }
 ) {
   const ignoreFormat = ignoreFormatWrapper(level, options);
-  const format = options?.format ?? defaultFormat;
+  const format = options?.format ?? plainFormat;
   return new DailyRotateFile(
     Object.assign(
       {
         filename: path.join('logs', filename.replace(/\.log$/gi, '-%DATE%')),
         extension: path.extname(filename),
-        datePattern: 'YYYYMMDDHHmmss',
+        frequency: 'daily',
+        datePattern:
+          'YYYYMMDD' /** The option will infect the rotate frequency of log's file */,
         level,
         maxSize: 4 << 20 /* bytes */,
         maxFiles: logConf?.LOG_MAX_FILES || '14d',
@@ -105,12 +122,16 @@ const createFileTransport = function (
 };
 
 /**
- * sendTransform send log message, logger master listen the message to log
- * @param info
+ *
+ * sendTransform create a transform which send log message, logger master listen the message to log
+ * @param messageType
  */
-const sendTransform: MyTransformFunction = (info) => {
+const sendTransform = (messageType = DEFAULT_MESSAGE_TYPE) => (
+  info: winston.LogEntry
+): false => {
   process.send({
-    type: 'log',
+    type: messageType,
+    timestamp: timestampFormatter.format(new Date()),
     payload: Object.assign(info, { pid: process.pid }),
   });
   return false;
@@ -127,12 +148,21 @@ let loggerInstance: {
 
 /**
  *
+ * The default log message type value the slaver work send to master
+ */
+const DEFAULT_MESSAGE_TYPE = 'log';
+
+/**
+ *
  * addListener add listener to listen worker's message of log
  * @param workers
  */
-const addListener = (...workers: cluster.Worker[]): void => {
+const addListener = (
+  messageType = DEFAULT_MESSAGE_TYPE,
+  ...workers: cluster.Worker[]
+): void => {
   if (loggerInstance === undefined) {
-    createLogger(true, workers);
+    createLogger(true, messageType, workers);
   } else {
     const listeners = (loggerInstance.listeners =
       loggerInstance.listeners || []);
@@ -144,7 +174,7 @@ const addListener = (...workers: cluster.Worker[]): void => {
       type: string;
       payload: winston.LogEntry;
     }) => {
-      if (type === 'log') {
+      if (type === messageType) {
         logger.log(Object.assign({ pid: process.pid }, payload));
       }
     };
@@ -163,17 +193,27 @@ const addListener = (...workers: cluster.Worker[]): void => {
 
 /**
  *
- * createLogger create an winston.Logger instance, repeatedly creating will replace the instance before created
+ * createLogger will initial variable loggerInstance,
+ * and return loggerInstance.logger
+ * repeatedly calling the method will reinitialize loggerInstance.
+ * The master logger can receive listened worker's info and log
+ * The slaver logger will send info to listener.
+ * The master logger must use addListener to listen slaver worker logger's info.
  * @param loggerMaster
+ * @param messageType   The type value of the log message the slaver send to master
  */
 const createLogger = (
   loggerMaster = false,
+  messageType = DEFAULT_MESSAGE_TYPE,
   workers?: cluster.Worker[]
 ): winston.Logger => {
-  const format = loggerMaster ? defaultFormat : winston.format(sendTransform)();
-  const level = 'verbose';
+  const format = loggerMaster
+    ? plainFormat
+    : winston.format(sendTransform(messageType))();
+  const level = 'info';
   let logger: winston.Logger;
   if (loggerMaster) {
+    // create master logger
     logger = winston.createLogger({
       level,
       format,
@@ -185,18 +225,21 @@ const createLogger = (
         createFileTransport('error.log', 'warn'),
         createFileTransport('info.log', 'info', {
           ignoreLevels: ['error'],
-          format: combine(errors({ stack: true }), format),
+          format: combine(errorsFormat, format),
         }),
         new winston.transports.Console({ level: 'info' }),
-        createFileTransport('verbose.log', 'verbose', { levelsOnly: true }),
       ],
     });
     loggerInstance = { logger, isMaster: loggerMaster, listeners: [] };
     if (workers && workers.length > 0) {
-      addListener(...workers);
+      addListener(messageType, ...workers);
     }
   } else {
-    logger = winston.createLogger({ level, format });
+    // sub routine logger
+    logger = winston.createLogger({
+      level,
+      format: combine(errorsFormat, format),
+    });
     loggerInstance = { logger, isMaster: loggerMaster };
   }
 
@@ -206,7 +249,7 @@ const createLogger = (
 
   //
   // If we're not in production then log to the console,
-  // and filter default console log.
+  // add console log upon level info.
   //
   if (process.env.NODE_ENV !== 'production') {
     logger.add(
@@ -215,7 +258,7 @@ const createLogger = (
           ignoreFormatWrapper(logger.level, {
             ignoreLevels: ['error', 'warn', 'info'],
           }),
-          defaultFormat
+          plainFormat
         ),
       })
     );
@@ -224,7 +267,7 @@ const createLogger = (
 };
 
 /**
- *
+ * getLogger return the logger current process can use.
  */
 const getLogger = (): winston.Logger => {
   if (loggerInstance?.logger === undefined) {
@@ -235,5 +278,32 @@ const getLogger = (): winston.Logger => {
   return loggerInstance.logger;
 };
 
+/**
+ *
+ * finishLogger call logger.end() and return a promise when logger finished.
+ */
+const finishLogger = async (): Promise<undefined> => {
+  const logger = loggerInstance?.logger;
+  if (logger !== undefined) {
+    const transportsFinished = logger.transports.map((t) => {
+      return new Promise((resolve) => {
+        t.on('finish', () => {
+          resolve();
+        });
+      });
+    });
+    const loggerFinished = Promise.all(transportsFinished).then(() => {
+      // set a timeout to wait writing file completed.
+      return new Promise<undefined>((resolve) => {
+        setTimeout(() => {
+          resolve();
+        }, 1000);
+      });
+    });
+    logger.end();
+    return loggerFinished;
+  }
+};
+
 export default getLogger;
-export { getLogger, createLogger, addListener };
+export { getLogger, createLogger, addListener, finishLogger };
