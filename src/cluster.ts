@@ -53,9 +53,7 @@ const startMaster = (numWorkers: number): void => {
     if (Object.keys(cluster.workers).length === 0) {
       cluster.removeAllListeners();
       logger.info(`server exit!`);
-      finishLogger().then(() => {
-        process.exit();
-      });
+      exitProcess();
     }
   });
 
@@ -89,7 +87,7 @@ const startWorker = () => {
           server.close(() => {
             server.unref();
             logger.info(`worker ${process.pid} server closed completed`);
-            process.exit();
+            exitProcess();
           });
           break;
         }
@@ -99,6 +97,21 @@ const startWorker = () => {
       }
     });
   });
+};
+
+/**
+ *
+ * exitProcess wait finishLogger() and exit;
+ */
+const exitProcess = (): void => {
+  finishLogger()
+    .then(() => {
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
 };
 
 const startCluster = (numWorkers: number): void => {
