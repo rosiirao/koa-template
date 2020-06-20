@@ -15,5 +15,16 @@ const clusterConf: {
 };
 
 const numWorkers = clusterConf.APP_WORKER_COUNT;
+(async () => {
+  if (process.env.NODE_ENV !== 'production') {
+    const dotenv = await import('dotenv')
+      .then((dotenv) => dotenv.default)
+      .catch((err) => {
+        console.error(err);
+        process.exit(1);
+      });
+    dotenv.config();
+  }
 
-startCluster(numWorkers);
+  startCluster(numWorkers);
+})();
