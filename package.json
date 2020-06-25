@@ -1,6 +1,6 @@
 {
   "name": "koa-template",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "A template for koa project",
   "main": "dist/main.js",
   "scripts": {
