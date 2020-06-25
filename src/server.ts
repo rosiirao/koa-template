@@ -29,24 +29,19 @@ const HOSTNAME =
   (http2Enabled ? appConf?.HTTP2_HOST : appConf?.HTTP_HOST) ?? 'localhost';
 const httpProtocol = http2Enabled ? 'https' : 'http';
 
-const httpModule = import(http2Enabled ? 'http2' : 'http');
-
 import { Server } from 'http';
-export const startServer = (): Promise<Server> => {
-  const app = startApp();
-  const server: Promise<Server> = httpModule
-    .then((http_) =>
-      http2Enabled
-        ? http_.createSecureServer(options, app.callback())
-        : http_.createServer(app.callback())
-    )
-    .then((server) => {
-      server.listen({
-        port: PORT,
-        host: HOSTNAME,
-      });
-      return server;
-    });
+import { Http2SecureServer } from 'http2';
+
+export const startServer = async (): Promise<Server | Http2SecureServer> => {
+  const app = startApp().callback();
+  const server = http2Enabled
+    ? (await import('http2')).createSecureServer(options, app)
+    : (await import('http')).createServer(app);
+
+  server.listen({
+    port: PORT,
+    host: HOSTNAME,
+  });
   return server;
 };
 
