@@ -2,8 +2,8 @@ import Router from '@koa/router';
 // import package from '../../package';
 
 // import { version as ver, name } from '../../package.json';
-const ver = '1.0.0';
-const name = 'hello-node';
+const ver = 'v1';
+const name = 'koa-template';
 
 // const pkg: { name: string; version: string } = require('../../package');
 
