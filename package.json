@@ -52,11 +52,12 @@
     "typescript": "^3.9.7"
   },
   "dependencies": {
-    "@koa/router": "^9.0.1",
+    "@koa/router": "^9.3.1",
     "config": "^3.3.1",
     "debug": "^4.1.1",
     "dotenv": "^8.2.0",
     "koa": "^2.13.0",
+    "koa-body": "^4.2.0",
     "winston": "^3.3.3",
     "winston-daily-rotate-file": "^4.5.0"
   }

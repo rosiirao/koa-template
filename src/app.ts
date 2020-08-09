@@ -3,8 +3,10 @@ import Koa from 'koa';
 import route from './routes';
 import logger from './logger';
 
+import { ICustomAppState } from './app.d';
+
 const startApp = (): Koa => {
-  const app = new Koa();
+  const app = new Koa<unknown, ICustomAppState>();
   app.use(logger(app));
 
   /**
@@ -24,3 +26,4 @@ const startApp = (): Koa => {
 };
 
 export default startApp;
+export { ICustomAppState };

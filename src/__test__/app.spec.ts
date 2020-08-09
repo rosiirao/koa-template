@@ -25,4 +25,29 @@ describe('api test', () => {
     //   .expect(200)
     //   .expect('Content-Type', /json/);
   });
+
+  it('auth service', async () => {
+    const authorization = await appTest
+      .post('/services/login')
+      .send('username=admin&password=1234')
+      .expect(302)
+      .then(function (v) {
+        return v.get('Authorization');
+      });
+
+    return Promise.all([
+      appTest
+        .get('/services/who')
+        .set({
+          Authorization: authorization,
+        })
+        .expect(200),
+      appTest
+        .get('/services/who')
+        .set({
+          Authorization: 'Bearer ',
+        })
+        .expect(401),
+    ]);
+  });
 });
