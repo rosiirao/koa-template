@@ -282,11 +282,11 @@ const getLogger = (): winston.Logger => {
  *
  * finishLogger call logger.end() and return a promise when logger finished.
  */
-const finishLogger = async (): Promise<undefined> => {
+const finishLogger = async (): Promise<void> => {
   const logger = loggerInstance?.logger;
   if (logger !== undefined) {
     const transportsFinished = logger.transports.map((t) => {
-      return new Promise((resolve) => {
+      return new Promise<void>((resolve) => {
         t.on('finish', () => {
           resolve();
         });
@@ -294,7 +294,7 @@ const finishLogger = async (): Promise<undefined> => {
     });
     const loggerFinished = Promise.all(transportsFinished).then(() => {
       // set a timeout to wait writing file completed.
-      return new Promise<undefined>((resolve) => {
+      return new Promise<void>((resolve) => {
         setTimeout(() => {
           resolve();
         }, 1000);
