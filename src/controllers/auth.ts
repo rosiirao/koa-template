@@ -18,6 +18,10 @@ const authService = async function (token = '') {
   return user;
 };
 
+/**
+ * Send Authorization token and redirect if login success, otherwise do nothing.
+ * @param ctx
+ */
 export const login: Router.Middleware = async function (ctx) {
   const { username, password, redirectTo } = ctx.request.body;
   const token = await loginService(username, password);
@@ -49,6 +53,12 @@ const resolveAuthToken = async function (
   return token;
 };
 
+/**
+ * Set ctx.currentUser if auth success, otherwise return 401.
+ * @param ctx ctx.currentUser = user
+ * @param next
+ * @returns
+ */
 export const auth: Router.Middleware<
   unknown,
   ICustomAppState
