@@ -1,12 +1,14 @@
 import Koa from 'koa';
 
-import route from './routes';
+import routes from './routes';
 import logger from './logger';
 
-import { ICustomAppState } from './app.d';
+import { IUserState } from './app.d';
+
+// import send from 'koa-send';
 
 const startApp = (): Koa => {
-  const app = new Koa<unknown, ICustomAppState>();
+  const app = new Koa<unknown, IUserState>();
   app.use(logger(app));
 
   /**
@@ -21,9 +23,12 @@ const startApp = (): Koa => {
     await next();
   });
 
-  app.use(route(app));
+  // app.use(async (ctx, _) => {
+  //   await send(ctx, ctx.path, { root: __dirname + '/public' });
+  // });
+  app.use(routes);
   return app;
 };
 
 export default startApp;
-export { ICustomAppState };
+export { IUserState };

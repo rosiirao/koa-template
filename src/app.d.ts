@@ -1,4 +1,4 @@
-export interface ICustomAppState {
+export interface IUserState {
   currentUser: {
     id: string;
   };
