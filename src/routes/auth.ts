@@ -2,13 +2,15 @@ import Router from '@koa/router';
 import { login, auth } from '../controllers/auth';
 import body from 'koa-body';
 
-import { ICustomAppState } from '../app';
+import { IUserState } from '../app';
+import compose from 'koa-compose';
 
-const router = new Router<unknown, ICustomAppState>({
-  prefix: '/services',
+const router = new Router<unknown, IUserState>({
+  prefix: '/auth',
 });
 
 router.post('/login', body(), login).get('/who', auth, async function (ctx) {
   ctx.body = ctx.currentUser;
 });
-export default router;
+
+export default compose([router.routes(), router.allowedMethods()]);

@@ -1,6 +1,6 @@
 import Router from '@koa/router';
 import 'koa-body';
-import { ICustomAppState } from '../app';
+import { IUserState } from '../app';
 
 const loginService = async function (username = '', password = '') {
   if (username === '' || password === '') {
@@ -59,10 +59,10 @@ const resolveAuthToken = async function (
  * @param next
  * @returns
  */
-export const auth: Router.Middleware<
-  unknown,
-  ICustomAppState
-> = async function (ctx, next) {
+export const auth: Router.Middleware<unknown, IUserState> = async function (
+  ctx,
+  next
+) {
   return resolveAuthToken(ctx)
     .then(authService)
     .then(function (user) {

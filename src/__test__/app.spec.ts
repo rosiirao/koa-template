@@ -28,7 +28,7 @@ describe('api test', () => {
 
   it('auth service', async () => {
     const authorization = await appTest
-      .post('/services/login')
+      .post('/auth/login')
       .send('username=admin&password=1234')
       .expect(302)
       .then(function (v) {
@@ -37,13 +37,13 @@ describe('api test', () => {
 
     return Promise.all([
       appTest
-        .get('/services/who')
+        .get('/auth/who')
         .set({
           Authorization: authorization,
         })
         .expect(200),
       appTest
-        .get('/services/who')
+        .get('/auth/who')
         .set({
           Authorization: 'Bearer ',
         })

@@ -15,7 +15,7 @@ let healthStatus = true,
  * @param ctx
  * @param next
  */
-export const healthz: Router.Middleware = async function (ctx, next) {
+export const healthz: Router.Middleware = async function (ctx) {
   let available = 200,
     message;
 
@@ -29,7 +29,7 @@ export const healthz: Router.Middleware = async function (ctx, next) {
   }
   ctx.status = available;
   ctx.body = message;
-  await next();
+  return;
 };
 
 /**
@@ -37,7 +37,7 @@ export const healthz: Router.Middleware = async function (ctx, next) {
  * @param ctx
  * @param next
  */
-export const readyz: Router.Middleware = async function readyz(ctx, next) {
+export const readyz: Router.Middleware = async function readyz(ctx) {
   let available = 200,
     message;
 
@@ -51,7 +51,7 @@ export const readyz: Router.Middleware = async function readyz(ctx, next) {
   }
   ctx.status = available;
   ctx.body = message;
-  await next();
+  return;
 };
 
 /**
@@ -73,10 +73,10 @@ export function setReady(status = true): void {
 /**
  * Get version of app
  */
-export const version: Router.Middleware = async function version(ctx, next) {
+export const version: Router.Middleware = async function version(ctx) {
   ctx.body = {
     name: name,
     version: ver,
   };
-  await next();
+  return;
 };

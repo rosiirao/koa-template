@@ -8,6 +8,7 @@ import {
 
 enum TER_MSG {
   QUIT,
+  Q, // the abbreviation for QUIT
 }
 
 const startMaster = (numWorkers: number): void => {
@@ -62,7 +63,7 @@ const startMaster = (numWorkers: number): void => {
     const cmd = data.toString().trim().toUpperCase();
     if (cmd in TER_MSG) {
       Object.values(cluster.workers).forEach((worker) => {
-        worker.send(TER_MSG.QUIT);
+        worker.send(TER_MSG[cmd as keyof typeof TER_MSG]);
       });
     } else {
       // add a prompt to wait user's command
@@ -82,6 +83,7 @@ const startWorker = () => {
   startServer().then((server) => {
     process.on('message', (m) => {
       switch (m) {
+        case TER_MSG.Q:
         case TER_MSG.QUIT: {
           process.removeAllListeners();
           server.removeAllListeners();

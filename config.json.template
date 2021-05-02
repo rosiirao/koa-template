@@ -18,5 +18,11 @@
     "log": {
         "ACCESS_LOG": false,
         "LOG_MAX_FILES": "14d"
+    },
+    "services":{
+        "files": {
+            "path": "/file",    // Can't be empty string, default is "/files"
+            "root": "public"    // The root static file path, if empty the services will not work
+        }
     }
 }
