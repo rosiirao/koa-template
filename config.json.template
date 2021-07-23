@@ -21,7 +21,7 @@
     },
     "services":{
         "files": {
-            "path": "/file",    // Can't be empty string, default is "/files"
+            "path": "/static",    // Can't be empty string, default is "/files"
             "root": "public"    // The root static file path, if empty the services will not work
         }
     }

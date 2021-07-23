@@ -30,7 +30,7 @@ const startMaster = (numWorkers: number): void => {
   for (let i = 0; i < numWorkers; i++) {
     cluster.fork();
   }
-  addLoggerListener(undefined, ...Object.values(cluster.workers));
+  addLoggerListener(undefined, cluster.workers);
 
   let count = 0;
   cluster.on('listening', (worker) => {
@@ -81,7 +81,7 @@ const startWorker = () => {
   const logger = createLogger(false);
 
   startServer().then((server) => {
-    process.on('message', (m) => {
+    process.on('message', (m: TER_MSG) => {
       switch (m) {
         case TER_MSG.Q:
         case TER_MSG.QUIT: {
@@ -118,7 +118,7 @@ const exitProcess = (): void => {
 };
 
 const startCluster = (numWorkers: number): void => {
-  if (cluster.isMaster) {
+  if (cluster.isPrimary) {
     startMaster(numWorkers);
   } else {
     startWorker();

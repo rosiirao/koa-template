@@ -126,16 +126,16 @@ const createFileTransport = function (
  * sendTransform create a transform which send log message, logger master listen the message to log
  * @param messageType
  */
-const sendTransform = (messageType = DEFAULT_MESSAGE_TYPE) => (
-  info: winston.LogEntry
-): false => {
-  process.send({
-    type: messageType,
-    timestamp: timestampFormatter.format(new Date()),
-    payload: Object.assign(info, { pid: process.pid }),
-  });
-  return false;
-};
+const sendTransform =
+  (messageType = DEFAULT_MESSAGE_TYPE) =>
+  (info: winston.LogEntry): false => {
+    process.send({
+      type: messageType,
+      timestamp: timestampFormatter.format(new Date()),
+      payload: Object.assign(info, { pid: process.pid }),
+    });
+    return false;
+  };
 
 /**
  * logger is a winston.Logger instance wrapper, use createLogger create an instance before use it.
@@ -143,7 +143,7 @@ const sendTransform = (messageType = DEFAULT_MESSAGE_TYPE) => (
 let loggerInstance: {
   logger: winston.Logger;
   isMaster: boolean;
-  listeners?: number[];
+  listeners?: string[];
 };
 
 /**
@@ -159,7 +159,7 @@ const DEFAULT_MESSAGE_TYPE = 'log';
  */
 const addListener = (
   messageType = DEFAULT_MESSAGE_TYPE,
-  ...workers: cluster.Worker[]
+  workers: typeof cluster.workers
 ): void => {
   if (loggerInstance === undefined) {
     createLogger(true, messageType, workers);
@@ -178,14 +178,15 @@ const addListener = (
         logger.log(Object.assign({ pid: process.pid }, payload));
       }
     };
-    for (const worker of workers) {
-      if (!listeners.includes(worker.id)) {
+    for (const id in workers) {
+      if (!listeners.includes(id)) {
+        const worker = workers[id];
         worker.on('message', listener);
         worker.on('exit', () => {
-          const index = listeners.indexOf(worker.id);
+          const index = listeners.indexOf(id);
           listeners.splice(index, 1);
         });
-        listeners.push(worker.id);
+        listeners.push(id);
       }
     }
   }
@@ -205,7 +206,7 @@ const addListener = (
 const createLogger = (
   loggerMaster = false,
   messageType = DEFAULT_MESSAGE_TYPE,
-  workers?: cluster.Worker[]
+  workers?: typeof cluster.workers
 ): winston.Logger => {
   const format = loggerMaster
     ? plainFormat
@@ -231,8 +232,8 @@ const createLogger = (
       ],
     });
     loggerInstance = { logger, isMaster: loggerMaster, listeners: [] };
-    if (workers && workers.length > 0) {
-      addListener(messageType, ...workers);
+    if (workers !== undefined) {
+      addListener(messageType, workers);
     }
   } else {
     // sub routine logger

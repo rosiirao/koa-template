@@ -7,6 +7,14 @@ const accessLog = logConf?.ACCESS_LOG;
 const appLogger = (app: Koa): Koa.Middleware => {
   const logger = getLogger();
   app.on('error', (err, ctx) => {
+    const status = err.statusCode || err.status;
+    if (
+      status < 500 &&
+      status !== 429 &&
+      !/invalid_header/i.test(err.message || String(err))
+    ) {
+      return;
+    }
     /* centralized error handling:
      *   console.log error
      *   write error to log file
