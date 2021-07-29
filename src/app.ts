@@ -9,6 +9,11 @@ import { IUserState } from './app.d';
 
 const startApp = (): Koa => {
   const app = new Koa<unknown, IUserState>();
+  app.use(async (ctx, next) => {
+    await next().catch((err) => {
+      ctx.throw(err.statusCode || err.status || 500, err);
+    });
+  });
   app.use(logger(app));
 
   /**

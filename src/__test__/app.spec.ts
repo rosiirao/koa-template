@@ -32,14 +32,15 @@ describe('api test', () => {
       .send('username=admin&password=1234')
       .expect(302)
       .then(function (v) {
-        return v.get('Authorization');
+        return v.get('Bearer');
       });
 
+    expect(authorization).toEqual(expect.any(String));
     return Promise.all([
       appTest
         .get('/auth/who')
         .set({
-          Authorization: authorization,
+          Authorization: 'Bearer ' + authorization,
         })
         .expect(200),
       appTest

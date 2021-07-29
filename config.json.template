@@ -25,5 +25,9 @@
             "path": "/static",    // Can't be empty string, default is "/files"
             "root": "public"      // The root static file path, if empty the services will not work
         }
+    },
+    "auth": {
+      "PUBLIC_KEY": "rsa public key path",
+      "PRIVATE_KEY": "rsa private key path"
     }
 }

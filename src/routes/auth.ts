@@ -1,5 +1,6 @@
 import Router from '@koa/router';
-import { login, auth, register } from '../controllers/auth';
+import { login, verifyAuthToken } from '../controllers/auth';
+import { cors } from '../controllers/cors';
 import body from 'koa-body';
 
 import { IUserState } from '../app';
@@ -11,9 +12,14 @@ const router = new Router<unknown, IUserState>({
 
 router
   .post('/login', body(), login)
-  .get('/who', auth, async function (ctx) {
-    ctx.body = ctx.currentUser;
+  .options('/who', (ctx) => {
+    ctx.set({
+      'Access-Control-Allow-Headers': 'Authorization',
+    });
+    ctx.status = 204;
   })
-  .post('/register', body(), register);
+  .get('/who', verifyAuthToken, async function (ctx) {
+    ctx.body = ctx.state.name;
+  });
 
-export default compose([router.routes(), router.allowedMethods()]);
+export default compose([cors, router.routes(), router.allowedMethods()]);
