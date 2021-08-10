@@ -33,6 +33,7 @@
   },
   "homepage": "https://github.com/rosiirao/koa-template#readme",
   "devDependencies": {
+    "@types/bcrypt": "^5.0.0",
     "@types/config": "^0.0.39",
     "@types/debug": "^4.1.5",
     "@types/jest": "^26.0.23",
@@ -53,6 +54,8 @@
   },
   "dependencies": {
     "@koa/router": "^10.0.0",
+    "@prisma/client": "^2.28.0",
+    "bcrypt": "^5.0.1",
     "config": "^3.3.1",
     "debug": "^4.1.1",
     "dotenv": "^10.0.0",

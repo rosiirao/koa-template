@@ -2,6 +2,17 @@ import Router from '@koa/router';
 import 'koa-body';
 import { IUserState } from '../app';
 
+import { create, prisma } from '../query/user';
+
+export const register: Router.Middleware = async (ctx): Promise<void> => {
+  const user = ctx.request.body;
+  ctx.body = await create(user).finally(async () => {
+    await prisma.$disconnect();
+  });
+  ctx.type = '.json';
+  // return next();
+};
+
 const loginService = async function (username = '', password = '') {
   if (username === '' || password === '') {
     throw new Error('Invalid Credentials');

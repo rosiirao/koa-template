@@ -13,6 +13,7 @@ const appLogger = (app: Koa): Koa.Middleware => {
       status !== 429 &&
       !/invalid_header/i.test(err.message || String(err))
     ) {
+      ctx.expose = true;
       return;
     }
     /* centralized error handling:
