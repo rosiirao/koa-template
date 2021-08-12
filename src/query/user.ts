@@ -30,12 +30,16 @@ export const create = async ({
     data: {
       name,
       email,
-      password: await hashPassword(password),
       posts: {
         create: { title: 'Hello World' },
       },
       profile: {
         create: { bio: 'I like turtles' },
+      },
+      userAuth: {
+        create: {
+          password: await hashPassword(password),
+        },
       },
     },
   });

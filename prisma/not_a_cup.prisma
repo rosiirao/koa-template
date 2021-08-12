@@ -27,11 +27,18 @@ model Profile {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
+  id        Int        @id @default(autoincrement())
+  email     String     @unique
   name      String?
-  password  String   @koaTemplate.Char(60)
-  createdAt DateTime @default(now())
+  createdAt DateTime   @default(now())
   posts     Post[]
   profile   Profile?
+  userAuth  UserAuth[]
+}
+
+model UserAuth {
+  userId       Int     @id
+  user         User    @relation(fields: [userId], references: [id])
+  password     String  @koaTemplate.Char(60)
+  refreshToken String? @koaTemplate.Char(60)
 }
