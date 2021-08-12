@@ -1,7 +1,18 @@
-import Router from '@koa/router';
+import Router, { RouterContext } from '@koa/router';
 import 'koa-body';
+import { nanoid } from 'nanoid';
+import bcrypt from 'bcrypt';
 
 import config from 'config';
+
+const saltRounds = 8;
+// const myPlaintextPassword = 's0//P4$$w0rD';
+// const someOtherPlaintextPassword = 'not_bacon';
+
+const hashPassword = async (password: string) => {
+  const salt = await bcrypt.genSalt(saltRounds);
+  return bcrypt.hash(password, salt);
+};
 
 type Conf = {
   PUBLIC_KEY?: string;
@@ -23,7 +34,8 @@ import { jwtVerify } from 'jose/jwt/verify';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 // const importMeta = require('./helper.mjs');
 
-const jwt_exp_timeout = 3_600_000; // 2h
+const jwt_exp_timeout = 15 * 60_000; // 15m
+const refresh_token_length = 60; // must be equal to the length of userAuth model
 const refresh_token_exp_timeout = 108_000_000; // 30
 const refresh_token_path = '/auth/refresh_token'; // 30
 
@@ -34,30 +46,51 @@ const publicKey = PUBLIC_KEY
   ? crypto.createPublicKey(fs.readFileSync(PUBLIC_KEY))
   : undefined;
 
-import { create, prisma } from '../query/user';
+import {
+  create,
+  findCredential,
+  findOne,
+  findUserCredential,
+  prisma,
+  updateUserCredential,
+} from '../query/user.query';
 
 export const register: Router.Middleware = async (ctx): Promise<void> => {
-  const user = ctx.request.body;
-  ctx.body = await create(user).finally(async () => {
+  const { password, ...rest } = ctx.request.body;
+  ctx.body = await create({
+    password: await hashPassword(password),
+    ...rest,
+  }).finally(async () => {
     await prisma.$disconnect();
   });
   ctx.type = '.json';
   // return next();
 };
 
-const loginService = async function (username = '', password = '') {
-  if (privateKey === undefined) {
-    throw createHttpError(500, new Error('Private key not found!'));
-  }
+const findUser = async (username = '', password = '') => {
   if (username === '' || password === '') {
     throw createHttpError(401, 'Invalid Credentials');
+  }
+  const user = await findUserCredential({ email: username });
+  if (
+    user === null ||
+    !(await bcrypt.compare(password, user.credential.password))
+  ) {
+    throw createHttpError(401, 'Invalid Credentials');
+  }
+  return user;
+};
+
+const createJWT = async function (username: string, id: string) {
+  if (privateKey === undefined) {
+    throw createHttpError(500, new Error('Private key not found!'));
   }
   const token = await new SignJWT({
     'urn:notacup:claim': true,
     name: username,
   })
     .setProtectedHeader({ alg: 'RS512' })
-    .setSubject(username)
+    .setSubject(id)
     .setIssuedAt()
     .setIssuer('urn:notacup:dev')
     .setAudience('urn:notacup:any')
@@ -67,34 +100,51 @@ const loginService = async function (username = '', password = '') {
   return token;
 };
 
+const auth = async (
+  ctx: RouterContext,
+  user: { id: number; name?: string }
+) => {
+  const { id } = user;
+  let { name } = user;
+  if (name === undefined) {
+    name = await findOne({ id }).then(({ name }) => name);
+  }
+  ctx.type = 'application/json; charset=utf-8';
+  ctx.body = {
+    jwt_token: await createJWT(name, String(id)),
+    jwt_token_exp: new Date(jwt_exp_timeout + Date.now()),
+  };
+};
+
 /**
  * Send Authorization token and redirect if login success, otherwise do nothing.
  * @param ctx
  */
 export const login: Router.Middleware = async function (ctx) {
   const { username, password /* redirectTo */ } = ctx.request.body;
-  const jwt = await loginService(username, password);
-  const token = await loginService(username, password);
+  const { id } = await findUser(username, password);
+
+  const refresh_token = nanoid(refresh_token_length);
+  const refresh_token_exp = new Date(refresh_token_exp_timeout + Date.now());
+
+  /**
+   * don't need wait updating refresh token finished
+   */
+  updateUserCredential(id, {
+    refreshToken: refresh_token,
+    refreshTokenExp: refresh_token_exp,
+  });
 
   ctx.set({
     'Access-Control-Allow-Credentials': 'true',
   });
-  ctx.cookies.set('refresh_token', token, {
+  ctx.cookies.set('refresh_token', refresh_token, {
     httpOnly: true,
     path: refresh_token_path,
-    expires: new Date(refresh_token_exp_timeout + Date.now()),
+    expires: refresh_token_exp,
+    sameSite: 'none',
   });
-  ctx.type = 'application/json; charset=utf-8';
-  ctx.body = {
-    jwt_token: jwt,
-    jwt_token_exp: new Date(jwt_exp_timeout + Date.now()),
-  };
-  // ctx.cookies.set('token', token, {
-  //   httpOnly: true,
-  //   expires: new Date(exp_timeout + Date.now()),
-  // });
-  // ctx.redirect(redirectTo || '/');
-  // ctx.status = 302;
+  await auth(ctx, { id, name: username });
 };
 
 export const verifyAuthToken: Router.Middleware = async function (ctx, next) {
@@ -134,4 +184,14 @@ export const verifyAuthToken: Router.Middleware = async function (ctx, next) {
   ctx.state = { ...ctx.state, id: sub, name };
 
   return next();
+};
+
+export const refreshToken: Router.Middleware = async (ctx) => {
+  const token = ctx.cookies.get('refresh_token');
+  const credential = await findCredential({ refreshToken: token });
+  if (credential === null) return;
+  if (credential.refreshTokenExp < new Date()) {
+    return;
+  }
+  await auth(ctx, { id: credential.userId });
 };

@@ -1,7 +1,7 @@
 import api from './api';
-import auth from './auth';
+import auth from './auth.route';
 import files from './files';
-import user from './user';
+import user from './user.route';
 
 import compose from 'koa-compose';
 

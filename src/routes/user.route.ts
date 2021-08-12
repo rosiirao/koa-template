@@ -1,7 +1,7 @@
 import Router from '@koa/router';
 import createHttpError from 'http-errors';
 import compose from 'koa-compose';
-import { findAll, findOne } from '../query/user';
+import { findAll, findOne } from '../query/user.query';
 
 const router = new Router({
   prefix: '/user',
@@ -18,7 +18,7 @@ router.get('/:id?', async (ctx) => {
   if (!/^\d+$/.test(id)) {
     throw createHttpError(404, 'User not found');
   }
-  const user = await findOne(Number(id));
+  const user = await findOne({ id: Number(id) });
   if (user == undefined) {
     throw createHttpError(404, 'User not found');
   }
