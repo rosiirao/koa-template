@@ -1,5 +1,6 @@
 import startApp from './app';
 import fs from 'fs';
+import util from 'util';
 
 import config from 'config';
 const appConf: {
@@ -9,18 +10,28 @@ const appConf: {
   HTTP2_ALLOW_HTTP1?: boolean;
   HTTP_HOST?: string;
   HTTP_PORT?: number;
+  CA?: string | string[];
   CERT_FILE?: string;
   CERT_KEY_FILE?: string;
 } = config.has('server') && config.get('server');
 
+const readFileAsync = util.promisify(fs.readFile);
 const http2Enabled = appConf.HTTP2_SERVER;
-const options = http2Enabled
-  ? {
-      cert: fs.readFileSync(appConf.CERT_FILE),
-      key: fs.readFileSync(appConf.CERT_KEY_FILE),
-      allowHTTP1: appConf.HTTP2_ALLOW_HTTP1 ?? false,
-    }
-  : {};
+const options = (async () =>
+  http2Enabled
+    ? {
+        cert: await readFileAsync(appConf.CERT_FILE),
+        key: await readFileAsync(appConf.CERT_KEY_FILE),
+        allowHTTP1: appConf.HTTP2_ALLOW_HTTP1 ?? false,
+        ...(appConf.CA
+          ? {
+              ca: await Promise.all(
+                [].concat(appConf.CA).map((path) => readFileAsync(path))
+              ),
+            }
+          : undefined),
+      }
+    : {})();
 
 const PORT = http2Enabled
   ? appConf?.HTTP2_PORT ?? 3443
@@ -35,7 +46,7 @@ import { Http2SecureServer } from 'http2';
 export const startServer = async (): Promise<Server | Http2SecureServer> => {
   const app = startApp().callback();
   const server = http2Enabled
-    ? (await import('http2')).createSecureServer(options, app)
+    ? (await import('http2')).createSecureServer(await options, app)
     : (await import('http')).createServer(app);
 
   server.listen({

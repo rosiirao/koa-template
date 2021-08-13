@@ -12,6 +12,7 @@
         "HTTP2_ALLOW_HTTP1": true,
         "HTTP_HOST": "localhost",
         "HTTP_PORT": 8081,
+        "CA": "/ca.crt",   // string | string[] self-signed certificate used
         "CERT_FILE": "/certificate_path.pem",
         "CERT_KEY_FILE": "/certificate_key_path.key"
     },
@@ -22,7 +23,7 @@
     "services":{
         "files": {
             "path": "/static",    // Can't be empty string, default is "/files"
-            "root": "public"    // The root static file path, if empty the services will not work
+            "root": "public"      // The root static file path, if empty the services will not work
         }
     }
 }
