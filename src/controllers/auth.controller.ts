@@ -188,10 +188,32 @@ export const verifyAuthToken: Router.Middleware = async function (ctx, next) {
 
 export const refreshToken: Router.Middleware = async (ctx) => {
   const token = ctx.cookies.get('refresh_token');
+  if (token === undefined) ctx.throw(401);
   const credential = await findCredential({ refreshToken: token });
-  if (credential === null) return;
+  if (credential === null) ctx.throw(401);
   if (credential.refreshTokenExp < new Date()) {
-    return;
+    ctx.throw(401, 'Expired token');
   }
   await auth(ctx, { id: credential.userId });
+};
+
+import Cache from 'node-cache';
+
+const challengeCache = new Cache();
+const challenge_ttl = 10 * 60_000;
+
+export const changePasswordAuth: Router.Middleware = (ctx) => {
+  const challengeCode = nanoid(64);
+  const challengeMap: Map<string, string> =
+    challengeCache.get('change_password') ?? new Map();
+  challengeMap.set('x', challengeCode);
+  challengeCache.set('change_password', challengeMap, challenge_ttl);
+  ctx.body = challengeCode;
+};
+
+export const changePassword: Router.Middleware = (ctx) => {
+  const challengeCode = challengeCache
+    .get<Map<string, string>>('change_password')
+    ?.get('x');
+  ctx.body = process.pid + ' - ' + challengeCode;
 };

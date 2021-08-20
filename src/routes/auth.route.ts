@@ -1,5 +1,7 @@
 import Router from '@koa/router';
 import {
+  changePassword,
+  changePasswordAuth,
   login,
   refreshToken,
   register,
@@ -18,6 +20,8 @@ const router = new Router<unknown, IUserState>({
 router
   .post('/login', body(), login)
   .post('/register', body(), register)
+  .post('/change_password_auth', changePasswordAuth)
+  .get('/change_password', changePassword)
   .get('/refresh_token', refreshToken)
   .options('/who', (ctx) => {
     ctx.set({
