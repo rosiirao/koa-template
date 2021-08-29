@@ -30,7 +30,7 @@ describe('api test', () => {
     const authorization = await appTest
       .post('/auth/login')
       .send('username=admin&password=1234')
-      .expect(302)
+      .expect(200)
       .then(function (v) {
         return v.get('Bearer');
       });

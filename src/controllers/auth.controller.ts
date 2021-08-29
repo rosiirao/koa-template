@@ -181,12 +181,12 @@ export const verifyAuthToken: Router.Middleware = async function (ctx, next) {
       },
     });
   });
-  ctx.state = { ...ctx.state, id: sub, name };
+  ctx.state = { ...ctx.state, user: { id: sub, name } };
 
   return next();
 };
 
-export const refreshToken: Router.Middleware = async (ctx) => {
+export const refreshToken: Router.Middleware<IUserState> = async (ctx) => {
   const token = ctx.cookies.get('refresh_token');
   if (token === undefined) ctx.throw(401);
   const credential = await findCredential({ refreshToken: token });
@@ -197,23 +197,27 @@ export const refreshToken: Router.Middleware = async (ctx) => {
   await auth(ctx, { id: credential.userId });
 };
 
-import Cache from 'node-cache';
+import { clusterCache } from '../cache';
+import { IUserState } from '../app';
 
-const challengeCache = new Cache();
 const challenge_ttl = 10 * 60_000;
+const challengeCacheKey = (userId: IUserState['user']['id']) =>
+  `auth/change_password/challenge/${userId}`;
 
-export const changePasswordAuth: Router.Middleware = (ctx) => {
+export const changePasswordAuth: Router.Middleware<IUserState> = (ctx) => {
   const challengeCode = nanoid(64);
-  const challengeMap: Map<string, string> =
-    challengeCache.get('change_password') ?? new Map();
-  challengeMap.set('x', challengeCode);
-  challengeCache.set('change_password', challengeMap, challenge_ttl);
+
+  clusterCache.set(
+    challengeCacheKey(ctx.state.user.id),
+    challengeCode,
+    challenge_ttl
+  );
   ctx.body = challengeCode;
 };
 
-export const changePassword: Router.Middleware = (ctx) => {
-  const challengeCode = challengeCache
-    .get<Map<string, string>>('change_password')
-    ?.get('x');
+export const changePassword: Router.Middleware<IUserState> = async (ctx) => {
+  const challengeCode = await clusterCache.get(
+    challengeCacheKey(ctx.state.user.id)
+  );
   ctx.body = process.pid + ' - ' + challengeCode;
 };

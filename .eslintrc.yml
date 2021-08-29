@@ -11,9 +11,10 @@ parserOptions:
   sourceType: module
 parser: '@typescript-eslint/parser'
 plugins:
-- '@typescript-eslint'
-- 'jest'
+  - '@typescript-eslint'
+  - 'jest'
 extends:
-- 'eslint:recommended'
-- 'plugin:@typescript-eslint/recommended'
-rules: {}
+  - 'eslint:recommended'
+  - 'plugin:@typescript-eslint/recommended'
+rules:
+  '@typescript-eslint/no-non-null-assertion': 0

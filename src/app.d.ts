@@ -1,5 +1,5 @@
 export interface IUserState {
-  state: {
+  user: {
     name: string;
     id: string;
   };

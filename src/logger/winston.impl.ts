@@ -165,7 +165,7 @@ const addListener = (
     createLogger(true, messageType, workers);
   } else {
     const listeners = (loggerInstance.listeners =
-      loggerInstance.listeners || []);
+      loggerInstance.listeners ?? []);
     const logger = loggerInstance.logger;
     const listener = ({
       type,
@@ -208,39 +208,16 @@ const createLogger = (
   messageType = DEFAULT_MESSAGE_TYPE,
   workers?: typeof cluster.workers
 ): winston.Logger => {
-  const format = loggerMaster
-    ? plainFormat
-    : winston.format(sendTransform(messageType))();
   const level = 'info';
   let logger: winston.Logger;
   if (loggerMaster) {
-    // create master logger
-    logger = winston.createLogger({
-      level,
-      format,
-      transports: [
-        //
-        // - Write all logs with level `error` and below to `error.log`
-        // - Write all logs with level `info` and below to `combined.log`
-        //
-        createFileTransport('error.log', 'warn'),
-        createFileTransport('info.log', 'info', {
-          ignoreLevels: ['error'],
-          format: combine(errorsFormat, format),
-        }),
-        new winston.transports.Console({ level: 'info' }),
-      ],
-    });
+    logger = createMainLogger(level);
     loggerInstance = { logger, isMaster: loggerMaster, listeners: [] };
     if (workers !== undefined) {
       addListener(messageType, workers);
     }
   } else {
-    // sub routine logger
-    logger = winston.createLogger({
-      level,
-      format: combine(errorsFormat, format),
-    });
+    logger = createChildLogger(level, messageType);
     loggerInstance = { logger, isMaster: loggerMaster };
   }
 
@@ -265,6 +242,43 @@ const createLogger = (
     );
   }
   return logger;
+};
+
+/**
+ * main logger write log to files
+ */
+const createMainLogger = (level = 'info') => {
+  const format = plainFormat;
+  return winston.createLogger({
+    level,
+    format,
+    transports: [
+      //
+      // - Write all logs with level `error` and below to `error.log`
+      // - Write all logs with level `info` and below to `combined.log`
+      //
+      createFileTransport('error.log', 'warn'),
+      createFileTransport('info.log', 'info', {
+        ignoreLevels: ['error'],
+        format: combine(errorsFormat, format),
+      }),
+      new winston.transports.Console({ level: 'info' }),
+    ],
+  });
+};
+
+/**
+ * child logger send messages to main logger
+ */
+const createChildLogger = (
+  level = 'info',
+  sendMessageType = DEFAULT_MESSAGE_TYPE
+) => {
+  const format = winston.format(sendTransform(sendMessageType))();
+  return winston.createLogger({
+    level,
+    format: combine(errorsFormat, format),
+  });
 };
 
 /**

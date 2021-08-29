@@ -5,6 +5,8 @@ import {
   addListener as addLoggerListener,
   finishLogger,
 } from './logger';
+import { createCacheConsumer, createCacheProvider } from './cache';
+import { publish, subscribe } from './utils';
 
 enum TER_MSG {
   QUIT,
@@ -30,6 +32,7 @@ const startMaster = (numWorkers: number): void => {
   for (let i = 0; i < numWorkers; i++) {
     cluster.fork();
   }
+  createCacheProvider();
   addLoggerListener(undefined, cluster.workers);
 
   let count = 0;
@@ -62,13 +65,16 @@ const startMaster = (numWorkers: number): void => {
   process.stdin.on('data', function (data) {
     const cmd = data.toString().trim().toUpperCase();
     if (cmd in TER_MSG) {
-      Object.values(cluster.workers).forEach((worker) => {
-        worker.send(TER_MSG[cmd as keyof typeof TER_MSG]);
-      });
-    } else {
-      // add a prompt to wait user's command
-      process.stdout.write('> ');
+      // Object.values(cluster.workers).forEach(() => {
+      publish('system/cli', TER_MSG[cmd as keyof typeof TER_MSG]);
+      // });
+      return;
     }
+    if (cmd.trim() !== '') {
+      logger.info(`unknown command ${cmd}`);
+    }
+    // add a prompt to wait user's command
+    process.stdout.write('> ');
   });
 
   process.stdin.resume();
@@ -79,9 +85,14 @@ const startMaster = (numWorkers: number): void => {
 
 const startWorker = () => {
   const logger = createLogger(false);
-
-  startServer().then((server) => {
-    process.on('message', (m: TER_MSG) => {
+  createCacheConsumer();
+  startServer().then(async (server) => {
+    const sub = subscribe<TER_MSG>('system/cli');
+    for (
+      let { value: m, done } = await sub.next();
+      !done;
+      { value: m, done } = await sub.next()
+    ) {
       switch (m) {
         case TER_MSG.Q:
         case TER_MSG.QUIT: {
@@ -95,10 +106,11 @@ const startWorker = () => {
           break;
         }
         default: {
-          logger.info(`unknown supported command ${TER_MSG[m]}`);
+          if (typeof m !== 'undefined')
+            logger.info(`unknown supported command ${TER_MSG[m]}`);
         }
       }
-    });
+    }
   });
 };
 
