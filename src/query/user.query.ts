@@ -44,7 +44,7 @@ export const create = async ({
 
 type UserResult = User & {
   posts: Post[];
-  profile: Profile;
+  profile: Profile | null;
 };
 
 export const findAll = async (): Promise<UserResult[]> => {
@@ -60,7 +60,7 @@ export const findAll = async (): Promise<UserResult[]> => {
 export const findOne = async (uniqueInput: {
   id?: number;
   email?: string;
-}): Promise<UserResult> => {
+}): Promise<UserResult | null> => {
   const user = await prisma.user.findUnique({
     where: uniqueInput,
     include: {
@@ -77,7 +77,9 @@ export const findUserCredential = async (
     email?: string;
   },
   field = ['password' as keyof Credential]
-): Promise<Partial<User> & { credential: Partial<Credential> }> => {
+): Promise<
+  (Partial<User> & { credential: Partial<Credential> | null }) | null
+> => {
   const select = field.reduce((s, k) => ({ ...s, [k]: true }), {});
   const user = await prisma.user.findUnique({
     where: uniqueInput,
@@ -106,7 +108,7 @@ export const updateUserCredential = async (
 export const findCredential = async (uniqueInput: {
   id?: number;
   refreshToken?: string;
-}): Promise<Credential> => {
+}): Promise<Credential | null> => {
   return prisma.credential.findUnique({
     where: uniqueInput,
   });

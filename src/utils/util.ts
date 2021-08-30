@@ -3,4 +3,4 @@ const idMaker = (function* (id = 1) {
     id = (yield id++) || id;
   }
 })();
-export const nextId = (id?: number): number => idMaker.next(id).value;
+export const nextId = (id?: number): number => idMaker.next(id!).value;

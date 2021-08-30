@@ -3,30 +3,38 @@ import fs from 'fs';
 import util from 'util';
 
 import config from 'config';
-const appConf: {
-  HTTP2_SERVER?: boolean;
-  HTTP2_HOST?: string;
-  HTTP2_PORT?: number;
-  HTTP2_ALLOW_HTTP1?: boolean;
-  HTTP_HOST?: string;
-  HTTP_PORT?: number;
-  CA?: string | string[];
-  CERT_FILE?: string;
-  CERT_KEY_FILE?: string;
-} = config.has('server') && config.get('server');
+const appConf:
+  | {
+      HTTP2_SERVER?: boolean;
+      HTTP2_HOST?: string;
+      HTTP2_PORT?: number;
+      HTTP2_ALLOW_HTTP1?: boolean;
+      HTTP_HOST?: string;
+      HTTP_PORT?: number;
+      CA?: string | string[];
+      CERT_FILE?: string;
+      CERT_KEY_FILE?: string;
+    }
+  | undefined = config.has('server') ? config.get('server') : undefined;
+
+if (appConf === undefined) {
+  throw new Error('Missing server configuration');
+}
 
 const readFileAsync = util.promisify(fs.readFile);
 const http2Enabled = appConf.HTTP2_SERVER;
 const options = (async () =>
   http2Enabled
     ? {
-        cert: await readFileAsync(appConf.CERT_FILE),
-        key: await readFileAsync(appConf.CERT_KEY_FILE),
+        cert: await readFileAsync(appConf.CERT_FILE!),
+        key: await readFileAsync(appConf.CERT_KEY_FILE!),
         allowHTTP1: appConf.HTTP2_ALLOW_HTTP1 ?? false,
         ...(appConf.CA
           ? {
               ca: await Promise.all(
-                [].concat(appConf.CA).map((path) => readFileAsync(path))
+                ([] as string[])
+                  .concat(appConf.CA)
+                  .map((path) => readFileAsync(path))
               ),
             }
           : undefined),

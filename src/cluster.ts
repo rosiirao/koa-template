@@ -54,7 +54,7 @@ const startMaster = (numWorkers: number): void => {
   });
 
   cluster.on('exit', () => {
-    if (Object.keys(cluster.workers).length === 0) {
+    if (Object.keys(cluster.workers ?? []).length === 0) {
       cluster.removeAllListeners();
       process.stdin.removeAllListeners();
       logger.info(`server exit!`);
@@ -106,8 +106,8 @@ const startWorker = () => {
           break;
         }
         default: {
-          if (typeof m !== 'undefined')
-            logger.info(`unknown supported command ${TER_MSG[m]}`);
+          if (m === undefined) break;
+          logger.info(`unknown supported command ${TER_MSG[m]}`);
         }
       }
     }
@@ -138,3 +138,14 @@ const startCluster = (numWorkers: number): void => {
 };
 
 export default startCluster;
+
+const f = (): void | string => 'abc';
+
+const p = (x: string) => x;
+
+const r = f();
+if (r !== undefined) {
+  p(r);
+}
+
+export { r };

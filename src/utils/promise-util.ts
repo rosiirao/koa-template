@@ -41,7 +41,8 @@ export type PromiseResult<P, E = Error> = Promise<Result<ThenArg<P>, E>>;
  * wrap a promise value to PromiseResult type
  */
 const wrapValue = <T, E = Error>(value: Promise<T>): Promise<Result<T, E>> => {
-  return value.then((r) => [r] as const).catch((e) => [undefined, e] as const);
+  // eslint-disable-next-line no-sparse-arrays
+  return value.then((r) => [r] as const).catch((e) => [, e] as const);
 };
 
 /**

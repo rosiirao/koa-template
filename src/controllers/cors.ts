@@ -2,7 +2,7 @@ import Router from '@koa/router';
 
 export const corsHeaders = (
   ctx: Parameters<Router.Middleware>[0]
-): { [key: string]: string | undefined } => {
+): { [key: string]: string } | void => {
   const refererOrigin = (ctx.header.referer ?? '').replace(
     /(^https?:\/\/[^:/]+(?::\d+)?).*/i,
     '$1'

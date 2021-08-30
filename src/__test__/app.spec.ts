@@ -27,12 +27,17 @@ describe('api test', () => {
   });
 
   it('auth service', async () => {
-    const authorization = await appTest
+    await appTest
       .post('/auth/login')
       .send('username=admin&password=1234')
+      .expect(401);
+
+    const authorization = await appTest
+      .post('/auth/login')
+      .send('username=test@example.com&password=test')
       .expect(200)
       .then(function (v) {
-        return v.get('Bearer');
+        return v.body.jwt_token;
       });
 
     expect(authorization).toEqual(expect.any(String));

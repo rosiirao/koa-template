@@ -17,7 +17,7 @@ export const publish = <T>(
     payload,
   };
   if (cluster.isWorker) {
-    process.send(message);
+    process.send?.(message);
     return;
   }
   if (worker !== undefined) {
@@ -25,11 +25,11 @@ export const publish = <T>(
     return;
   }
   for (const id in cluster.workers) {
-    cluster.workers[id].send(message);
+    cluster.workers[id]?.send(message);
   }
 };
 
-const subscribeMap = new Map<Channel, (...arg: never[]) => unknown>();
+const subscribeMap = new Map<Channel, Parameters<typeof process.on>[1]>();
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export const subscribe = async function* <T>(channel: Channel) {
@@ -40,7 +40,7 @@ export const subscribe = async function* <T>(channel: Channel) {
   subscribeMap.set(channel, handler);
   if (cluster.isPrimary) {
     for (const id in cluster.workers) {
-      cluster.workers[id].on('message', handler);
+      cluster.workers[id]?.on('message', handler);
     }
   } else {
     process.on('message', handler);
@@ -59,7 +59,7 @@ export const unsubscibe = (channel: Channel) => {
   if (handler === undefined) return;
   if (cluster.isPrimary) {
     for (const id in cluster.workers) {
-      cluster.workers[id].off('message', handler);
+      cluster.workers[id]?.off('message', handler);
     }
   } else {
     process.off('message', handler);

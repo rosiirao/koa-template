@@ -21,7 +21,7 @@ type Conf = {
 
 const { PUBLIC_KEY, PRIVATE_KEY }: Conf = config.has('services.auth')
   ? config.get('services.auth')
-  : undefined;
+  : {};
 
 import createHttpError from 'http-errors';
 import { corsHeaders } from './cors';
@@ -73,12 +73,12 @@ const findUser = async (username = '', password = '') => {
   }
   const user = await findUserCredential({ email: username });
   if (
-    user === null ||
+    user?.credential?.password === undefined ||
     !(await bcrypt.compare(password, user.credential.password))
   ) {
     throw createHttpError(401, 'Invalid Credentials');
   }
-  return user;
+  return user!;
 };
 
 const createJWT = async function (username: string, id: string) {
@@ -107,7 +107,10 @@ const auth = async (
   const { id } = user;
   let { name } = user;
   if (name === undefined) {
-    name = await findOne({ id }).then(({ name }) => name);
+    name = (await findOne({ id }))?.name ?? undefined;
+  }
+  if (name === undefined) {
+    throw createHttpError(401, 'User name is not effective');
   }
   ctx.type = 'application/json; charset=utf-8';
   ctx.body = {
@@ -130,7 +133,7 @@ export const login: Router.Middleware = async function (ctx) {
   /**
    * don't need wait updating refresh token finished
    */
-  updateUserCredential(id, {
+  updateUserCredential(id!, {
     refreshToken: refresh_token,
     refreshTokenExp: refresh_token_exp,
   });
@@ -144,24 +147,25 @@ export const login: Router.Middleware = async function (ctx) {
     expires: refresh_token_exp,
     sameSite: 'none',
   });
-  await auth(ctx, { id, name: username });
+  await auth(ctx, { id: id!, name: username });
 };
 
-export const verifyAuthToken: Router.Middleware = async function (ctx, next) {
+export const verifyAuthToken: Router.Middleware<IUserState> = async function (
+  ctx,
+  next
+) {
   if (publicKey === undefined) {
     throw createHttpError(500, new Error('Public key not found!'), {
       headers: corsHeaders(ctx),
     });
   }
   const auth = ctx.get('Authorization');
-  let token: string = auth.startsWith('Bearer ')
-    ? auth.substring(7)
-    : undefined;
+  let token = auth.startsWith('Bearer ') ? auth.substring(7) : undefined;
 
   const tokenKey = 'access_token';
-  token = token ?? ctx.query[tokenKey] ?? ctx.request?.body?.[tokenKey] ?? '';
+  token = token ?? ctx.query[tokenKey] ?? ctx.request?.body?.[tokenKey];
 
-  if (token === '') {
+  if (token === '' || token === undefined) {
     throw createHttpError(401, 'Unauthorized', {
       headers: corsHeaders(ctx),
     });
@@ -181,20 +185,24 @@ export const verifyAuthToken: Router.Middleware = async function (ctx, next) {
       },
     });
   });
-  ctx.state = { ...ctx.state, user: { id: sub, name } };
+  if (sub === undefined) {
+    throw createHttpError(401, 'Invalid token');
+  }
+  ctx.state = { ...ctx.state, user: { id: sub, name: name as string } };
 
   return next();
 };
 
 export const refreshToken: Router.Middleware<IUserState> = async (ctx) => {
   const token = ctx.cookies.get('refresh_token');
-  if (token === undefined) ctx.throw(401);
+  if (token === undefined) throw createHttpError(401);
   const credential = await findCredential({ refreshToken: token });
-  if (credential === null) ctx.throw(401);
-  if (credential.refreshTokenExp < new Date()) {
+  if (credential?.refreshTokenExp ?? undefined === undefined)
+    throw createHttpError(401);
+  if (credential!.refreshTokenExp! < new Date()) {
     ctx.throw(401, 'Expired token');
   }
-  await auth(ctx, { id: credential.userId });
+  await auth(ctx, { id: credential!.userId });
 };
 
 import { clusterCache } from '../cache';
@@ -216,7 +224,7 @@ export const changePasswordAuth: Router.Middleware<IUserState> = (ctx) => {
 };
 
 export const changePassword: Router.Middleware<IUserState> = async (ctx) => {
-  const challengeCode = await clusterCache.get(
+  const challengeCode = await clusterCache.take(
     challengeCacheKey(ctx.state.user.id)
   );
   ctx.body = process.pid + ' - ' + challengeCode;

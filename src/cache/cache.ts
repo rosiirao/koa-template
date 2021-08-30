@@ -17,11 +17,12 @@ export const cache: Koa.Middleware = async (ctx, next): Promise<void> => {
   if (!query.has('key')) {
     throw createHttpError(422, 'The key in query can not empty');
   }
+  const key = query.get('key')!;
   if (!query.has('value')) {
-    const value = await clusterCache.get(query.get('key'));
+    const value = await clusterCache.get(key);
     ctx.body = value;
   } else {
-    await clusterCache.set(query.get('key'), query.get('value'));
+    await clusterCache.set(key, query.get('value'));
   }
   await next();
 };
@@ -30,18 +31,18 @@ export const cache: Koa.Middleware = async (ctx, next): Promise<void> => {
 // set: <T>(key: string, value: T, ttl?: string | number) =>
 //   mainCache.set<T>(key, value, ttl),
 interface Cache {
-  get: <T>(key: string) => T | PromiseLike<T>;
-  set: <T>(key: string, value: T, ttl?: string | number) => void;
-  take: <T>(key: string) => T | PromiseLike<T>;
-  ttl?: (key: string, ttl: number) => void;
-  clear?: () => void;
+  get: <T>(this: Cache, key: string) => T | PromiseLike<T>;
+  set: <T>(this: Cache, key: string, value: T, ttl?: string | number) => void;
+  take: <T>(this: Cache, key: string) => T | PromiseLike<T>;
+  ttl?: (this: Cache, key: string, ttl: number) => void;
+  clear?: (this: Cache) => void;
 }
 
 type MessageOp<T> = {
   [P in keyof T]: {
     id: string;
     action: P;
-    arg: T[P] extends (...args: never[]) => unknown ? Parameters<T[P]> : T[P];
+    arg: T[P] extends ((...args: infer V) => unknown) | void ? V : T[P];
   };
 }[keyof T];
 
@@ -70,10 +71,15 @@ export const createCacheProvider = async (): Promise<void> => {
     !done;
     { value: payload, done } = await sub.next()
   ) {
-    if (typeof payload === 'undefined') return;
-    const { action, arg, id } = payload as MessageOp<Cache>;
-    // eslint-disable-next-line prefer-spread
-    const value = cache[action].apply(cache, arg);
+    if (payload === undefined) return;
+    const { action, arg, id } = payload;
+
+    if (cache[action] === undefined) {
+      throw new Error(`Cache operator ${action} is not support`);
+    }
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore: MessageOp<Cache> has assured the *arg* equals the *Parameters<Cache[typeof action]>*. so we disable ts-check on call.
+    const value = cache[action](...arg);
     if (id !== undefined) {
       publish<CacheMessageResponse<typeof value>['payload']>(MESSAGE_OP_CACHE, {
         id,
@@ -124,7 +130,7 @@ export const createCacheConsumer = (): void => {
 
 async function cacheActionByChannel<T>(
   sub: AsyncGenerator<CacheMessageResponse<T>['payload'], void, unknown>,
-  payload: CacheMessage['payload']
+  payload: NonNullable<MessageOp<Cache>>
 ) {
   publish<CacheMessage['payload']>(MESSAGE_OP_CACHE, payload);
   const [value, setValue, setError] = createPromise<T>();

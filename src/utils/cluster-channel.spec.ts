@@ -19,7 +19,7 @@ describe.skip('channel test', () => {
     if (cluster.isPrimary) {
       const [workerClosed, setWorkerClosed] = createPromise<void>();
       for (const id in cluster.workers) {
-        const worker = cluster.workers[id];
+        const worker = cluster.workers[id]!;
         worker.on('exit', () => {
           setWorkerClosed();
         });

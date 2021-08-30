@@ -8,7 +8,7 @@ import DailyRotateFile, {
   DailyRotateFileTransportOptions,
 } from 'winston-daily-rotate-file';
 import path from 'path';
-import logConf from './config';
+import logConf from './config.logger';
 import cluster from 'cluster';
 
 const { errors, printf, combine } = winston.format;
@@ -67,19 +67,20 @@ const plainFormat = printf((info) => {
 
 const ignoreFormatWrapper = (
   level: string,
-  options?: {
+  options: {
     ignoreLevels?: string[];
     levelsOnly?: boolean;
   }
 ) => {
-  const ignoreTransform: MyTransformFunction =
-    options &&
-    ('levelsOnly' in options && options.levelsOnly
+  const ignoreTransform: MyTransformFunction | undefined =
+    'levelsOnly' in options && options.levelsOnly
       ? (info) => (info.level === level ? info : false)
       : 'ignoreLevels' in options
-      ? (info) => (options.ignoreLevels.includes(info.level) ? false : info)
-      : undefined);
-
+      ? (info) => (options.ignoreLevels?.includes(info.level) ? false : info)
+      : undefined;
+  if (ignoreTransform === undefined) {
+    throw new Error('Log ignore options cant not be empty');
+  }
   return ignoreTransform && winston.format(ignoreTransform)();
 };
 
@@ -92,14 +93,16 @@ const ignoreFormatWrapper = (
  */
 const createFileTransport = function (
   filename: string,
-  level?: string,
+  level: string,
   options?: {
     ignoreLevels?: string[];
     levelsOnly?: boolean;
     format?: ReturnType<typeof combine>;
   }
 ) {
-  const ignoreFormat = ignoreFormatWrapper(level, options);
+  const ignoreFormat = options
+    ? ignoreFormatWrapper(level, options)
+    : undefined;
   const format = options?.format ?? plainFormat;
   return new DailyRotateFile(
     Object.assign(
@@ -129,7 +132,7 @@ const createFileTransport = function (
 const sendTransform =
   (messageType = DEFAULT_MESSAGE_TYPE) =>
   (info: winston.LogEntry): false => {
-    process.send({
+    process.send?.({
       type: messageType,
       timestamp: timestampFormatter.format(new Date()),
       payload: Object.assign(info, { pid: process.pid }),
@@ -181,8 +184,8 @@ const addListener = (
     for (const id in workers) {
       if (!listeners.includes(id)) {
         const worker = workers[id];
-        worker.on('message', listener);
-        worker.on('exit', () => {
+        worker?.on('message', listener);
+        worker?.on('exit', () => {
           const index = listeners.indexOf(id);
           listeners.splice(index, 1);
         });

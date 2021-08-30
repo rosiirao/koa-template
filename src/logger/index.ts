@@ -1,6 +1,6 @@
 // import { getLogger, createLogger, addListener } from './winston.impl';
 import Koa from 'koa';
-import logConf from './config';
+import logConf from './config.logger';
 import { getLogger } from './winston.impl';
 
 const accessLog = logConf?.ACCESS_LOG;
