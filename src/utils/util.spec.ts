@@ -1,7 +1,7 @@
 import { nextId } from './util';
 
 describe('util test', () => {
-  test('nextId test', () => {
+  it('nextId test start at its default value', () => {
     expect(nextId()).toBe(1);
     expect(nextId()).toBe(2);
     expect(nextId()).toBe(3);
