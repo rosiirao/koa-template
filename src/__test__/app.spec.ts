@@ -56,4 +56,31 @@ describe('api test', () => {
         .expect(401),
     ]);
   });
+
+  it('change password service', async () => {
+    // const changePasswordAuth = await appTest.post;
+    const authorization = await appTest
+      .post('/auth/login')
+      .send('username=test@example.com&password=test')
+      .expect(200)
+      .then(function (v) {
+        return v.body.jwt_token;
+      });
+
+    await appTest
+      .post('/auth/change_password')
+      .set({
+        Authorization: 'Bearer ' + authorization,
+      })
+      .send('password=test&newPassword=test_new')
+      .expect(204);
+
+    await appTest
+      .post('/auth/change_password')
+      .set({
+        Authorization: 'Bearer ' + authorization,
+      })
+      .send('password=test_new&newPassword=test')
+      .expect(204);
+  });
 });

@@ -20,8 +20,9 @@ const router = new Router<IUserState>({
 router
   .post('/login', body(), login)
   .post('/register', body(), register)
-  .post('/change_password_auth', verifyAuthToken, changePasswordAuth)
-  .post('/change_password', verifyAuthToken, changePassword)
+  .post('/change_password_auth', body(), changePasswordAuth)
+  .post('/change_password', verifyAuthToken, body(), changePassword)
+  .post('/reset_password', body(), changePassword)
   .get('/refresh_token', refreshToken)
   .options('/who', (ctx) => {
     ctx.set({

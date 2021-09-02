@@ -64,7 +64,6 @@ export const register: Router.Middleware = async (ctx): Promise<void> => {
     await prisma.$disconnect();
   });
   ctx.type = '.json';
-  // return next();
 };
 
 const findUser = async (username = '', password = '') => {
@@ -185,10 +184,10 @@ export const verifyAuthToken: Router.Middleware<IUserState> = async function (
       },
     });
   });
-  if (sub === undefined) {
+  if (sub === undefined || !isFinite(Number(sub))) {
     throw createHttpError(401, 'Invalid token');
   }
-  ctx.state = { ...ctx.state, user: { id: sub, name: name as string } };
+  ctx.state = { ...ctx.state, user: { id: Number(sub), name: name as string } };
 
   return next();
 };
@@ -207,25 +206,88 @@ export const refreshToken: Router.Middleware<IUserState> = async (ctx) => {
 
 import { clusterCache } from '../cache';
 import { IUserState } from '../app';
+import compose from 'koa-compose';
 
 const challenge_ttl = 10 * 60_000;
-const challengeCacheKey = (userId: IUserState['user']['id']) =>
-  `auth/change_password/challenge/${userId}`;
+const challengeCacheKey = (username: IUserState['user']['name']) =>
+  `auth/change_password/challenge/${username}`;
 
-export const changePasswordAuth: Router.Middleware<IUserState> = (ctx) => {
+export const changePasswordAuth: Router.Middleware<IUserState> = async (
+  ctx
+) => {
+  if (privateKey === undefined) {
+    throw createHttpError(500, new Error('Private key not found!'));
+  }
   const challengeCode = nanoid(64);
-
-  clusterCache.set(
-    challengeCacheKey(ctx.state.user.id),
-    challengeCode,
-    challenge_ttl
-  );
-  ctx.body = challengeCode;
+  const { username } = ctx.request.body;
+  const token = new SignJWT({
+    'urn:notacup:claim': true,
+    code: challengeCode,
+  })
+    .setSubject(username)
+    .setProtectedHeader({ alg: 'RS256' })
+    .sign(privateKey);
+  clusterCache.set(challengeCacheKey(username), challengeCode, challenge_ttl);
+  ctx.type = 'text/plain';
+  console.log(token);
+  ctx.body = await token;
 };
 
-export const changePassword: Router.Middleware<IUserState> = async (ctx) => {
-  const challengeCode = await clusterCache.take(
-    challengeCacheKey(ctx.state.user.id)
-  );
-  ctx.body = process.pid + ' - ' + challengeCode;
+const verifyChangePassword: Router.Middleware<IUserState> = async (
+  ctx,
+  next
+) => {
+  const token = new URLSearchParams(ctx.querystring).get('code');
+  const { password } = ctx.request.body ?? {};
+  if (token !== null) {
+    if (publicKey === undefined) {
+      throw new Error('Public key not found');
+    }
+    const {
+      payload: { code, sub },
+    } = await jwtVerify(token, publicKey, {
+      algorithms: ['RS256'],
+    });
+    if (typeof code !== 'string' || sub === undefined) {
+      throw createHttpError(403, 'Operation invalid');
+    }
+    ctx.state.user = { name: sub };
+    await verifyChallengeCode(sub, code);
+    return next();
+  }
+
+  const user = await ctx.state.user;
+  if (user !== undefined && password !== undefined) {
+    if ((await findUser(user.name, password)) === undefined) {
+      throw createHttpError(403, 'Password verify failed');
+    }
+    return next();
+  }
+
+  throw createHttpError(403, 'Operation invalid');
 };
+
+const changePassword: Router.Middleware<IUserState> = async (ctx) => {
+  const { newPassword } = ctx.request.body;
+  const { id, name } = ctx.state.user;
+  if (id === undefined && name === undefined) {
+    throw new Error('ctx.state.user.id must not be empty for change password');
+  }
+  await updateUserCredential(
+    (id ?? { email: name }) as number | { email: string },
+    {
+      password: await hashPassword(newPassword),
+    }
+  );
+  ctx.status = 204;
+};
+
+async function verifyChallengeCode(username: string, code: string) {
+  const challengeCode = await clusterCache.take(challengeCacheKey(username));
+  if (code !== challengeCode) {
+    throw createHttpError(403, 'Operation invalid or operation expired');
+  }
+}
+
+const changePasswordService = compose([verifyChangePassword, changePassword]);
+export { changePasswordService as changePassword };

@@ -92,15 +92,31 @@ export const findUserCredential = async (
 };
 
 export const updateUserCredential = async (
-  id: number,
-  data: {
-    password?: string;
-    refreshToken: string;
-    refreshTokenExp: Date;
+  id: number | { email: string },
+  data:
+    | {
+        password: string;
+      }
+    | {
+        refreshToken: string;
+        refreshTokenExp: Date;
+      }
+): Promise<Credential | null> => {
+  let userId: number | undefined;
+  if (typeof id !== 'number') {
+    userId = (
+      await prisma.user.findUnique({
+        where: { email: id.email },
+      })
+    )?.id;
+  } else {
+    userId = id;
   }
-): Promise<Credential> => {
+  if (userId === undefined) {
+    return null;
+  }
   return prisma.credential.update({
-    where: { userId: id },
+    where: { userId },
     data,
   });
 };
