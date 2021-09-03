@@ -4,6 +4,7 @@ import cluster from 'cluster';
 export interface Message<T> {
   type: string;
   payload: T;
+  pid: number;
 }
 
 type Channel = string;
@@ -12,9 +13,10 @@ export const publish = <T>(
   payload: T,
   worker?: typeof cluster.worker
 ): void => {
-  const message = {
+  const message: Message<T> = {
     type: channel,
     payload,
+    pid: process.pid,
   };
   if (cluster.isWorker) {
     process.send?.(message);
@@ -31,11 +33,18 @@ export const publish = <T>(
 
 const subscribeMap = new Map<Channel, Parameters<typeof process.on>[1]>();
 
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export const subscribe = async function* <T>(channel: Channel) {
-  let [promise, ok] = createPromise<T>();
-  const handler = ({ type, payload }: Message<T>) => {
-    if (type === channel) ok(payload);
+export type Subscriber<T> = AsyncGenerator<T, void, unknown>;
+
+/**
+ * Subscribe a channel, return message and the sender process id.
+ */
+export const subscribeWithId = async function* <T>(
+  channel: Channel
+): Subscriber<[payload: T, pid: number]> {
+  type MessageResponse = [payload: T, pid: number];
+  let [nextValue, setValue] = createPromise<MessageResponse>();
+  const handler = ({ type, payload, pid }: Message<T>) => {
+    if (type === channel) setValue([payload, pid]);
   };
   subscribeMap.set(channel, handler);
   if (cluster.isPrimary) {
@@ -46,15 +55,26 @@ export const subscribe = async function* <T>(channel: Channel) {
     process.on('message', handler);
   }
   while (true) {
-    yield await promise;
+    yield await nextValue;
     // subscribe has been cancelled, return
     if (!subscribeMap.has(channel)) return;
-    [promise, ok] = createPromise<T>();
+    [nextValue, setValue] = createPromise<MessageResponse>();
   }
 };
 
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export const unsubscibe = (channel: Channel) => {
+export const subscribe = async function* <T>(channel: Channel): Subscriber<T> {
+  const subscriber = subscribeWithId<T>(channel);
+  for (
+    let { value, done } = await subscriber.next();
+    !done;
+    { value, done } = await subscriber.next()
+  ) {
+    if (value === undefined) return;
+    yield value[0];
+  }
+};
+
+export const unsubscibe = (channel: Channel): void => {
   const handler = subscribeMap.get(channel);
   if (handler === undefined) return;
   if (cluster.isPrimary) {

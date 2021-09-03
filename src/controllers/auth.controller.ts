@@ -51,7 +51,6 @@ import {
   findCredential,
   findOne,
   findUserCredential,
-  prisma,
   updateUserCredential,
 } from '../query/user.query';
 
@@ -60,8 +59,6 @@ export const register: Router.Middleware = async (ctx): Promise<void> => {
   ctx.body = await create({
     password: await hashPassword(password),
     ...rest,
-  }).finally(async () => {
-    await prisma.$disconnect();
   });
   ctx.type = '.json';
 };
@@ -229,7 +226,6 @@ export const changePasswordAuth: Router.Middleware<IUserState> = async (
     .sign(privateKey);
   clusterCache.set(challengeCacheKey(username), challengeCode, challenge_ttl);
   ctx.type = 'text/plain';
-  console.log(token);
   ctx.body = await token;
 };
 

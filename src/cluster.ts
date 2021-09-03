@@ -89,11 +89,12 @@ const startWorker = () => {
   startServer().then(async (server) => {
     const sub = subscribe<TER_MSG>('system/cli');
     for (
-      let { value: m, done } = await sub.next();
+      let { value: command, done } = await sub.next();
       !done;
-      { value: m, done } = await sub.next()
+      { value: command, done } = await sub.next()
     ) {
-      switch (m) {
+      if (command === undefined) continue;
+      switch (command) {
         case TER_MSG.Q:
         case TER_MSG.QUIT: {
           process.removeAllListeners();
@@ -106,8 +107,7 @@ const startWorker = () => {
           break;
         }
         default: {
-          if (m === undefined) break;
-          logger.info(`unknown supported command ${TER_MSG[m]}`);
+          logger.info(`unknown supported command ${TER_MSG[command]}`);
         }
       }
     }

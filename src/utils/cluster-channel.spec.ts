@@ -3,7 +3,7 @@ import cluster from 'cluster';
 import createPromise from './promise-util';
 
 /**
- *  the cluster message event is unavailable in jest, so we have to skip this test now
+ *  The send and message event between cluster and workers is unavailable in jest, so we have to skip this test now
  */
 describe.skip('channel test', () => {
   beforeAll(() => {

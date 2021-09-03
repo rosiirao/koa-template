@@ -1,8 +1,13 @@
 import request from 'supertest';
 import startApp from '../app';
 
+import { prisma } from '../query/user.query';
+
 describe('api test', () => {
   const appTest = request(startApp().callback());
+  afterAll(() => {
+    prisma.$disconnect();
+  });
   it('kubernete status api', async () => {
     const testQueue = [
       appTest

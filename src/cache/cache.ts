@@ -1,9 +1,7 @@
-import Koa from 'koa';
 import NodeCache from 'node-cache';
 
 import { nextId } from '../utils';
 import createPromise from '../utils/promise-util';
-import createHttpError from 'http-errors';
 
 import cluster from 'cluster';
 
@@ -12,21 +10,6 @@ import cluster from 'cluster';
  */
 let clusterCache: Cache;
 
-export const cache: Koa.Middleware = async (ctx, next): Promise<void> => {
-  const query = new URLSearchParams(ctx.querystring);
-  if (!query.has('key')) {
-    throw createHttpError(422, 'The key in query can not empty');
-  }
-  const key = query.get('key')!;
-  if (!query.has('value')) {
-    const value = await clusterCache.get(key);
-    ctx.body = value;
-  } else {
-    await clusterCache.set(key, query.get('value'));
-  }
-  await next();
-};
-
 // get: (key: string): NodeCache => mainCatchGetIf(key),
 // set: <T>(key: string, value: T, ttl?: string | number) =>
 //   mainCache.set<T>(key, value, ttl),
@@ -34,26 +17,36 @@ interface Cache {
   get: <T>(this: Cache, key: string) => T | PromiseLike<T>;
   set: <T>(this: Cache, key: string, value: T, ttl?: string | number) => void;
   take: <T>(this: Cache, key: string) => T | PromiseLike<T>;
-  ttl?: (this: Cache, key: string, ttl: number) => void;
+  ttl?: (this: Cache, key: string, ttlInSecond: number) => void;
   clear?: (this: Cache) => void;
 }
 
-type MessageOp<T> = {
-  [P in keyof T]: {
-    id: string;
-    action: P;
-    arg: T[P] extends ((...args: infer V) => unknown) | void ? V : T[P];
-  };
-}[keyof T];
-
+type MessageOp<T> = NonNullable<
+  {
+    [P in keyof T]: {
+      id: string;
+      action: P;
+      arg: T[P] extends ((...args: infer V) => unknown) | void ? V : T[P];
+    };
+  }[keyof T]
+>;
 const MESSAGE_OP_CACHE = 'op/cache';
 
-import { Message, publish, subscribe } from '../utils';
+import {
+  Message,
+  Subscriber,
+  publish,
+  subscribe,
+  subscribeWithId,
+} from '../utils';
 
 interface CacheMessage extends Message<MessageOp<Cache>> {
   type: typeof MESSAGE_OP_CACHE;
 }
-interface CacheMessageResponse<T> extends Message<{ id: string; data: T }> {
+
+type CacheResponse<T> = Message<{ id: string; data: T }>;
+
+interface CacheMessageResponse<T> extends CacheResponse<T> {
   type: typeof MESSAGE_OP_CACHE;
 }
 
@@ -64,27 +57,39 @@ export const createCacheProvider = async (): Promise<void> => {
   if (!cluster.isPrimary) {
     throw new Error('Cache Provider can only be created in Master process');
   }
-  const cache: Cache = clusterCache ?? new NodeCache();
-  const sub = subscribe<MessageOp<Cache>>(MESSAGE_OP_CACHE);
+  const cache = clusterCache ?? new NodeCache();
+  const subscriber = subscribeWithId<MessageOp<Cache>>(MESSAGE_OP_CACHE);
   for (
-    let { value: payload, done } = await sub.next();
+    let { value: request, done } = await subscriber.next();
     !done;
-    { value: payload, done } = await sub.next()
+    { value: request, done } = await subscriber.next()
   ) {
-    if (payload === undefined) return;
-    const { action, arg, id } = payload;
-
+    if (request === undefined) return;
+    const [payload, pid] = request;
+    const { action, id, arg } = payload;
     if (cache[action] === undefined) {
-      throw new Error(`Cache operator ${action} is not support`);
+      throw new Error(`Cache.${action} is not supported`);
     }
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore: MessageOp<Cache> has assured the *arg* equals the *Parameters<Cache[typeof action]>*. so we disable ts-check on call.
     const value = cache[action](...arg);
     if (id !== undefined) {
-      publish<CacheMessageResponse<typeof value>['payload']>(MESSAGE_OP_CACHE, {
-        id,
-        data: value,
-      });
+      const worker = ((): undefined | typeof cluster.worker => {
+        for (const id in cluster.workers) {
+          if (cluster.workers[id]?.process.pid === pid) {
+            return cluster.workers[id];
+          }
+        }
+        return;
+      })();
+      publish<CacheMessageResponse<typeof value>['payload']>(
+        MESSAGE_OP_CACHE,
+        {
+          id,
+          data: value,
+        },
+        worker
+      );
     }
   }
   clusterCache = cache;
@@ -97,8 +102,8 @@ export const createCacheConsumer = (): void => {
   if (!cluster.isWorker) {
     throw new Error('Cache Consumer can only be created in Worker process');
   }
-  const sub =
-    subscribe<CacheMessageResponse<never>['payload']>(MESSAGE_OP_CACHE);
+  const subscriber =
+    subscribe<CacheResponse<never>['payload']>(MESSAGE_OP_CACHE);
   const cache: Cache = {
     set: (key, value, ttl) => {
       publish(MESSAGE_OP_CACHE, {
@@ -110,7 +115,7 @@ export const createCacheConsumer = (): void => {
       // publish request T
       // receive message T
       const messageId = `${process.pid}-${nextId()}`;
-      return cacheActionByChannel<T>(sub, {
+      return cacheActionByChannel<T>(subscriber, {
         action: 'get',
         arg: [key],
         id: messageId,
@@ -118,7 +123,7 @@ export const createCacheConsumer = (): void => {
     },
     take: <T>(key: string) => {
       const messageId = `${process.pid}-${nextId()}`;
-      return cacheActionByChannel<T>(sub, {
+      return cacheActionByChannel<T>(subscriber, {
         action: 'take',
         arg: [key],
         id: messageId,
@@ -129,23 +134,24 @@ export const createCacheConsumer = (): void => {
 };
 
 async function cacheActionByChannel<T>(
-  sub: AsyncGenerator<CacheMessageResponse<T>['payload'], void, unknown>,
+  subscriber: Subscriber<CacheResponse<T>['payload']>,
   payload: NonNullable<MessageOp<Cache>>
 ) {
   publish<CacheMessage['payload']>(MESSAGE_OP_CACHE, payload);
   const [value, setValue, setError] = createPromise<T>();
   const ttl = setTimeout(() => {
     setError(
-      new Error(`Can' get cache: timeout, action: cache.${payload.action}`)
+      new Error(`Cache operation timeout, action: cache.${payload.action}`)
     );
   }, 1000);
   for (
-    let nextSub = await sub.next();
+    let nextSub = await subscriber.next();
     !nextSub.done;
-    nextSub = await sub.next()
+    nextSub = await subscriber.next()
   ) {
     if (typeof nextSub.value === 'undefined') continue;
-    const { id, data } = nextSub.value;
+    const payload = nextSub.value;
+    const { id, data } = payload;
     if (id === payload.id) {
       setValue(data as T);
       clearTimeout(ttl);
