@@ -51,7 +51,7 @@ interface CacheMessageResponse<T> extends CacheResponse<T> {
 }
 
 /**
- * Provide receive and handle the cache request
+ * Provide receive and handle the cache request, it must be called in primary process
  */
 export const createCacheProvider = async (): Promise<void> => {
   if (!cluster.isPrimary) {
@@ -96,7 +96,7 @@ export const createCacheProvider = async (): Promise<void> => {
 };
 
 /**
- * Consumer send cache action request to master process
+ * Consumer in worker process send cache action request to primary process
  */
 export const createCacheConsumer = (): void => {
   if (!cluster.isWorker) {

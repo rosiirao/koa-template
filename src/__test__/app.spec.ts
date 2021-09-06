@@ -1,12 +1,12 @@
 import request from 'supertest';
 import startApp from '../app';
 
-import { prisma } from '../query/user.query';
+import prisma from '../query/client';
 
 describe('api test', () => {
   const appTest = request(startApp().callback());
   afterAll(() => {
-    prisma.$disconnect();
+    return prisma.$disconnect();
   });
   it('kubernete status api', async () => {
     const testQueue = [

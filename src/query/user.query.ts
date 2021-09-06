@@ -1,7 +1,9 @@
-import { PrismaClient, User, Post, Profile, Credential } from '@prisma/client';
+import { User, Post, Profile, Credential, Prisma } from '@prisma/client';
 import createHttpError from 'http-errors';
 
-export const prisma = new PrismaClient();
+import prisma from './client';
+import { queryInput, orderByInput } from './shared';
+import { OrderByQuery } from './shared';
 
 export const create = async ({
   name,
@@ -47,17 +49,23 @@ type UserResult = User & {
   profile: Profile | null;
 };
 
-export const findAll = async (): Promise<UserResult[]> => {
+export const findAll = async (
+  count?: number,
+  query?: OrderByQuery<Prisma.UserOrderByInput>
+): Promise<UserResult[]> => {
+  const orderBy = orderByInput<Prisma.UserOrderByInput>(query, 'id');
   const allUsers = await prisma.user.findMany({
     include: {
       posts: true,
       profile: true,
     },
+    ...queryInput('take', count),
+    ...queryInput('orderBy', orderBy),
   });
   return allUsers;
 };
 
-export const findOne = async (uniqueInput: {
+export const findUnique = async (uniqueInput: {
   id?: number;
   email?: string;
 }): Promise<UserResult | null> => {
@@ -101,28 +109,27 @@ export const updateUserCredential = async (
         refreshToken: string;
         refreshTokenExp: Date;
       }
-): Promise<Credential | null> => {
-  let userId: number | undefined;
-  if (typeof id !== 'number') {
-    userId = (
-      await prisma.user.findUnique({
-        where: { email: id.email },
-      })
-    )?.id;
-  } else {
-    userId = id;
-  }
-  if (userId === undefined) {
-    return null;
-  }
-  return prisma.credential.update({
-    where: { userId },
-    data,
+): Promise<{ id: number }> => {
+  const query: { id: number } | { email: string } =
+    typeof id === 'number'
+      ? { id }
+      : {
+          email: id.email,
+        };
+
+  return prisma.user.update({
+    where: query,
+    data: {
+      credential: {
+        update: data,
+      },
+    },
+    select: { id: true },
   });
 };
 
 export const findCredential = async (uniqueInput: {
-  id?: number;
+  userId?: number;
   refreshToken?: string;
 }): Promise<Credential | null> => {
   return prisma.credential.findUnique({

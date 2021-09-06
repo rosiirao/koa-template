@@ -34,6 +34,8 @@ model User {
   posts      Post[]
   profile    Profile?
   credential Credential?
+
+  userResource UserResource[]
 }
 
 model Credential {
@@ -42,4 +44,26 @@ model Credential {
   password        String    @koaTemplate.Char(60)
   refreshToken    String?   @unique @koaTemplate.Char(60)
   refreshTokenExp DateTime?
+}
+
+model Resource {
+  id           Int            @id
+  userResource UserResource[]
+}
+
+model UserResource {
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+
+  resourceId Int
+  resource   Resource @relation(fields: [resourceId], references: [id])
+
+  owner  Boolean @default(false)
+  author Boolean @default(false)
+  reader Boolean @default(false)
+
+  @@id([userId, resourceId])
+  @@unique([userId, resourceId, author])
+  @@unique([userId, resourceId, reader])
+  @@unique([userId, resourceId, owner])
 }

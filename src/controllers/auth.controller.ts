@@ -49,7 +49,7 @@ const publicKey = PUBLIC_KEY
 import {
   create,
   findCredential,
-  findOne,
+  findUnique,
   findUserCredential,
   updateUserCredential,
 } from '../query/user.query';
@@ -103,7 +103,7 @@ const auth = async (
   const { id } = user;
   let { name } = user;
   if (name === undefined) {
-    name = (await findOne({ id }))?.name ?? undefined;
+    name = (await findUnique({ id }))?.name ?? undefined;
   }
   if (name === undefined) {
     throw createHttpError(401, 'User name is not effective');
