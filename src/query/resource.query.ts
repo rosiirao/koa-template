@@ -1,24 +1,31 @@
 import prisma from './client';
 import { Prisma } from '.prisma/client';
-import { queryInput, orderByInput } from './shared';
-import { OrderByQuery } from './shared';
+import { queryInput, orderByInput } from './query.shared';
+import { OrderByQuery } from './query.shared';
 
-type ResourcePermission = Partial<Record<'authors' | 'readers', number[]>>;
-type PermissionRecord = { author: boolean; reader: boolean; userId: number };
-type ResourcePermissionRecord = PermissionRecord & {
+import { LENGTH_MAX_NAME } from './query.shared';
+
+type ResourceAccessControl = Partial<Record<'authors' | 'readers', number[]>>;
+type AccessControlFields = {
+  author: boolean;
+  reader: boolean;
+  userId: number | null;
+};
+
+type ResourceAccessControlRecord = AccessControlFields & {
   resourceId: number;
 };
 
-const permissionSelector = {
+const accessControlSelector = {
   author: true,
   reader: true,
   userId: true,
 };
 
-const mapPermissionToRecord = (
-  data: ResourcePermission
-): ResourcePermissionRecord[] => {
-  return Object.entries(data).reduce<ResourcePermissionRecord[]>(
+const mapAccessControlToRecord = (
+  data: ResourceAccessControl
+): ResourceAccessControlRecord[] => {
+  return Object.entries(data).reduce<ResourceAccessControlRecord[]>(
     (data, [key, users]) => {
       const [enable, disable] =
         key === 'authors' ? ['author', 'reader'] : ['reader', 'author'];
@@ -33,7 +40,7 @@ const mapPermissionToRecord = (
           userId: id,
           [enable]: true,
           [disable]: false,
-        } as ResourcePermissionRecord);
+        } as ResourceAccessControlRecord);
       });
       return data;
     },
@@ -41,17 +48,36 @@ const mapPermissionToRecord = (
   );
 };
 
+export const createApplication = async (
+  name: string
+): Promise<{
+  id: number;
+  name: string;
+}> => {
+  if (name.length > LENGTH_MAX_NAME) {
+    throw new Error(
+      `The length of the role name can\t exceed ${LENGTH_MAX_NAME}, got name ${name}`
+    );
+  }
+  return prisma.application.create({
+    data: { name },
+  });
+};
+
 export const createResource = async (
   id: number,
+  applicationId: number,
   data: Partial<Record<'authors' | 'readers', number[]>>
 ): Promise<{
   id: number;
-  userResource: PermissionRecord[];
+  applicationId: number;
+  userResource: AccessControlFields[];
 }> => {
-  const userResourceData = mapPermissionToRecord(data);
+  const userResourceData = mapAccessControlToRecord(data);
   return prisma.resource.create({
     data: {
       id,
+      applicationId,
       userResource: {
         createMany: {
           skipDuplicates: true,
@@ -61,8 +87,9 @@ export const createResource = async (
     },
     select: {
       id: true,
+      applicationId: true,
       userResource: {
-        select: permissionSelector,
+        select: accessControlSelector,
       },
     },
   });
@@ -70,7 +97,7 @@ export const createResource = async (
 
 export const findResource = async (
   id: number
-): Promise<{ id: number; userResource: PermissionRecord[] } | null> => {
+): Promise<{ id: number; userResource: AccessControlFields[] } | null> => {
   return prisma.resource.findUnique({
     where: {
       id,
@@ -78,25 +105,50 @@ export const findResource = async (
     select: {
       id: true,
       userResource: {
-        select: permissionSelector,
+        select: accessControlSelector,
       },
     },
   });
 };
 
 export const findAllResources = async (
+  applicationId: number,
+  user?: { id: number; role: number[]; group: number[] },
   count?: number,
-  query?: OrderByQuery<Prisma.ResourceOrderByInput>
-): Promise<{ id: number; userResource: PermissionRecord[] }[]> => {
-  const orderBy = orderByInput<Prisma.ResourceOrderByInput>(query, 'id');
+  query?: OrderByQuery<Prisma.ResourceOrderByWithAggregationInput>
+): Promise<{ id: number; userResource: AccessControlFields[] }[]> => {
+  const orderBy = orderByInput<Prisma.ResourceOrderByWithAggregationInput>(
+    query,
+    'id'
+  );
   if (count === undefined && orderBy === undefined) {
     return [];
   }
+  const queryByUser: Prisma.ResourceWhereInput | undefined =
+    user === undefined
+      ? undefined
+      : {
+          userResource: {
+            some: {
+              OR: [
+                {
+                  userId: user.id,
+                },
+                { groupId: { in: user.group } },
+                { roleId: { in: user.role } },
+              ],
+            },
+          },
+        };
   return prisma.resource.findMany({
+    where: {
+      applicationId,
+      ...queryByUser,
+    },
     select: {
       id: true,
       userResource: {
-        select: permissionSelector,
+        select: accessControlSelector,
       },
     },
     ...queryInput('take', count),
@@ -108,12 +160,13 @@ export const findAllResourcesByUser = (
   userId: number,
   startFromId?: number,
   count?: number,
-  query?: OrderByQuery<Prisma.UserResourceOrderByInput>
-): Promise<ResourcePermissionRecord[]> => {
-  const orderBy = orderByInput<Prisma.UserResourceOrderByInput>(
-    query,
-    'userId'
-  );
+  query?: OrderByQuery<Prisma.ResourceAccessControlOrderByWithAggregationInput>
+): Promise<ResourceAccessControlRecord[]> => {
+  const orderBy =
+    orderByInput<Prisma.ResourceAccessControlOrderByWithAggregationInput>(
+      query,
+      'userId'
+    );
   const cursor =
     startFromId === undefined
       ? undefined
@@ -123,7 +176,7 @@ export const findAllResourcesByUser = (
             resourceId: startFromId,
           },
         };
-  return prisma.userResource.findMany({
+  return prisma.resourceAccessControl.findMany({
     where: {
       userId,
     },
@@ -138,9 +191,9 @@ export const updateResources = (
   data: Partial<Record<'authors' | 'readers', number[]>>
 ): Promise<{
   id: number;
-  userResource: PermissionRecord[];
+  userResource: AccessControlFields[];
 } | null> => {
-  const userResourceData = mapPermissionToRecord(data);
+  const userResourceData = mapAccessControlToRecord(data);
   return prisma.resource.update({
     where: {
       id: resourceId,
@@ -159,7 +212,7 @@ export const updateResources = (
     select: {
       id: true,
       userResource: {
-        select: permissionSelector,
+        select: accessControlSelector,
       },
     },
   });

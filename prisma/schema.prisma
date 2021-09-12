@@ -27,15 +27,55 @@ model Profile {
 }
 
 model User {
-  id         Int         @id @default(autoincrement())
-  email      String      @unique
-  name       String?
+  id    Int     @id @default(autoincrement())
+  email String  @unique
+  name  String? @unique
+  alias String?
+
   createdAt  DateTime    @default(now())
   posts      Post[]
   profile    Profile?
   credential Credential?
 
-  userResource UserResource[]
+  userResource ResourceAccessControl[]
+
+  group      GroupAssignment[]
+  role       RoleUserAssignment[]
+  priviledge PriviledgeAssignment[]
+
+}
+
+model Group {
+  id        Int      @id @default(autoincrement())
+  name      String   @koaTemplate.VarChar(32)
+  createdAt DateTime @default(now())
+
+  member GroupInherit[] @relation("member")
+  unit   GroupInherit[] @relation("unit")
+
+  user          GroupAssignment[]
+  role          RoleGroupAssignment[]
+  groupResource ResourceAccessControl[]
+}
+
+model GroupInherit {
+  memberId Int
+  member  Group @relation("member", fields: [memberId], references: [id])
+
+  unitId Int
+  unit   Group @relation("unit", fields: [unitId], references: [id])
+  @@id([memberId, unitId])
+}
+
+model GroupAssignment {
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  groupId Int
+  member  Group @relation(fields: [groupId], references: [id])
+
+  @@id([userId, groupId])
 }
 
 model Credential {
@@ -47,23 +87,102 @@ model Credential {
 }
 
 model Resource {
-  id           Int            @id
-  userResource UserResource[]
+  id            Int                     @id
+  applicationId Int
+  owner         Application             @relation(fields: [applicationId], references: [id])
+  userResource  ResourceAccessControl[]
 }
 
-model UserResource {
-  user   User @relation(fields: [userId], references: [id])
-  userId Int
+model ResourceAccessControl {
+  id Int @id @default(autoincrement())
+
+  userId Int?
+  user   User? @relation(fields: [userId], references: [id])
+
+  groupId Int?
+  group   Group? @relation(fields: [groupId], references: [id])
+
+  roleId Int?
+  role   Role? @relation(fields: [roleId], references: [id])
 
   resourceId Int
   resource   Resource @relation(fields: [resourceId], references: [id])
 
+
   owner  Boolean @default(false)
   author Boolean @default(false)
   reader Boolean @default(false)
+}
 
-  @@id([userId, resourceId])
-  @@unique([userId, resourceId, author])
-  @@unique([userId, resourceId, reader])
-  @@unique([userId, resourceId, owner])
+model Application {
+  id       Int        @id @default(autoincrement())
+  name     String     @koaTemplate.VarChar(32)
+  resource Resource[]
+  role     Role[]
+}
+
+model Role {
+  id            Int                    @id @default(autoincrement())
+  name          String                 @koaTemplate.VarChar(32)
+  applicationId Int
+  application   Application            @relation(fields: [applicationId], references: [id])
+  assignment    PriviledgeAssignment[]
+
+  assignee     RoleInherit[]           @relation("assignee")
+  inherit      RoleInherit[]           @relation("inherit")
+  user         RoleUserAssignment[]
+  group        RoleGroupAssignment[]
+  roleResource ResourceAccessControl[]
+
+  @@unique([name, applicationId])
+}
+
+model PriviledgeAssignment {
+  id     Int  @id @default(autoincrement())
+  roleId Int
+  role   Role @relation(fields: [roleId], references: [id])
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  priviledge Priviledge
+
+  @@unique([roleId, userId, priviledge])
+}
+
+model RoleInherit {
+  roleId Int
+  role   Role @relation("assignee", fields: [roleId], references: [id])
+
+  inheritId Int
+  inherit   Role @relation("inherit", fields: [inheritId], references: [id])
+
+  @@id([roleId, inheritId])
+}
+
+model RoleUserAssignment {
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  roleId Int
+  role   Role @relation(fields: [roleId], references: [id])
+
+  @@id([userId, roleId])
+}
+
+model RoleGroupAssignment {
+  groupId Int
+  group   Group @relation(fields: [groupId], references: [id])
+
+  roleId Int
+  role   Role @relation(fields: [roleId], references: [id])
+
+  @@id([groupId, roleId])
+}
+
+enum Priviledge {
+  NONE
+  READ_RESOURCE
+  CREATE_RESOURCE
+  MODIFY_RESOURCE
+  DELETE_RESUORCE
 }

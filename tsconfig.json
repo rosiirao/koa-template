@@ -29,6 +29,6 @@
     "exactOptionalPropertyTypes": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "prisma/seed.group.ts"],
   "exclude": ["node_modules", "**/*.spec.ts", "src/__test__/**"]
 }
