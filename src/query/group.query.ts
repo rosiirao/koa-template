@@ -1,4 +1,4 @@
-import { Prisma, Group } from '@prisma/client';
+import { Prisma, Group, User, PrismaPromise } from '@prisma/client';
 
 import { Element, ThenArg } from '../utils';
 
@@ -27,16 +27,18 @@ export const itemOfEnumerable = <T>(
   enumerable = [] as Prisma.Enumerable<T>,
   index = 0
 ): T | undefined =>
-  'length' in enumerable ? (enumerable as T[]).at(index) : enumerable;
+  Array.isArray(enumerable) ? (enumerable as T[]).at(index) : enumerable;
 
 export const enumerableIsEmpty = <T>(
   enumerable = [] as Prisma.Enumerable<T>
 ): boolean =>
-  'length' in enumerable ? enumerable.length === 0 : enumerable === undefined;
+  Array.isArray(enumerable)
+    ? enumerable.length === 0
+    : enumerable === undefined;
 
 export const enumerableFlat = <T>(
   enumerable = [] as Prisma.Enumerable<T>
-): T[] => ('length' in enumerable ? enumerable : [enumerable]);
+): T[] => (Array.isArray(enumerable) ? enumerable : [enumerable]);
 
 /**
  * Create by full name, if unitId is missing and the unit has found many, then fist one is select as the unit.
@@ -130,7 +132,7 @@ export const create = async (
     throw new Error(`Create group (${fullname}) get unknown error`);
   }
 
-  if ('length' in group) {
+  if (Array.isArray(group)) {
     if (group.length > 1) {
       throw new Error(
         `Creat group meet unknown error, re-check the group inherit needed!`
@@ -360,11 +362,32 @@ export const findGroupMapByName = async (
   return groupMap;
 };
 
+export const findMember = async (
+  unitId: number
+): Promise<Array<{ memberId: number }>> => {
+  return prisma.groupInherit.findMany({
+    where: {
+      unitId,
+    },
+    select: {
+      memberId: true,
+    },
+  });
+};
+
 export const findRoot = async (
-  count = DEFAULT_ROW_COUNT
+  count = DEFAULT_ROW_COUNT,
+  startId?: number
 ): Promise<Array<Element<MappedGroup>>> => {
   return prisma.group.findMany({
     where: rootCriteria,
+    ...(startId !== undefined && startId > 1
+      ? {
+          cursor: {
+            id: startId,
+          },
+        }
+      : undefined),
     take: count,
   });
 };
@@ -411,7 +434,7 @@ export const getGroupFullName = async (
         id: (unitId.push(id), unitId),
         fullname: `${name}/${fullname}`,
       });
-      if ('length' in u) {
+      if (Array.isArray(u)) {
         return u.map(joinUnit);
       }
       return joinUnit(u);
@@ -532,5 +555,69 @@ export const removeMany = async (
     count: number;
   }>(({ count: summarize }, { count }) => ({ count: count + summarize }), {
     count: 0,
+  });
+};
+
+export const appendUser = (
+  userId: Prisma.Enumerable<number>,
+  groupId: number
+): PrismaPromise<Prisma.BatchPayload> => {
+  return prisma.groupAssignment.createMany({
+    data: enumerableFlat(userId).map<{ userId: number; groupId: number }>(
+      (userId) => ({ userId, groupId })
+    ),
+    skipDuplicates: true,
+  });
+};
+
+export const removeUser = (
+  userId: Prisma.Enumerable<number>,
+  groupId: number
+): PrismaPromise<Prisma.BatchPayload> => {
+  return prisma.groupAssignment.createMany({
+    data: enumerableFlat(userId).map<{ userId: number; groupId: number }>(
+      (userId) => ({ userId, groupId })
+    ),
+    skipDuplicates: true,
+  });
+};
+
+export const moveUser = async (
+  userId: Prisma.Enumerable<number>,
+  fromGroupId: number,
+  toGroupId: number
+): Promise<Prisma.BatchPayload> => {
+  if (fromGroupId === toGroupId)
+    throw new Error(
+      `move user between group can't indicate the same group id: (${fromGroupId})`
+    );
+  return prisma
+    .$transaction([
+      removeUser(userId, fromGroupId),
+      appendUser(userId, toGroupId),
+    ])
+    .then(([removed, appended]) => ({
+      count: removed.count + appended.count,
+    }));
+};
+
+export const listUser = async (
+  groupId: number,
+  userCriteria = {
+    id: true,
+    name: true,
+    email: true,
+    alias: true,
+  } as Prisma.UserSelect
+): Promise<Array<Partial<User>>> => {
+  return prisma.user.findMany({
+    where: {
+      group: {
+        every: {
+          groupId,
+        },
+      },
+    },
+    select: userCriteria,
   });
 };

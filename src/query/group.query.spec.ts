@@ -1,3 +1,4 @@
+import { getRandomArbitrary } from '../utils';
 import {
   create,
   createMany,
@@ -39,9 +40,32 @@ describe('group query unit test', () => {
   });
 
   it('find all root works', async () => {
-    const root = await findRoot();
-    expect(root.length).toBeGreaterThanOrEqual(1);
-    const group = root[0]!;
+    const rootNumber = 2;
+    const root = await findRoot(2);
+    let times = 0;
+    for (
+      let fetchCount = root.length;
+      fetchCount === rootNumber;
+      fetchCount = root.length - fetchCount, times++
+    ) {
+      root.concat(await findRoot(rootNumber, root.at(-1)?.id));
+    }
+    const idSet = new Set(root.map(({ id }) => id));
+
+    // once get whole
+    const rootWholeOnce = await findRoot(root.length);
+
+    expect(root.length).toBeGreaterThanOrEqual(rootNumber * times);
+    expect(root.length).toBe(idSet.size);
+    expect(rootWholeOnce).toEqual(root);
+
+    if (root.length === 0) {
+      console.warn('No root group found, the test is not sufficient');
+      return;
+    }
+
+    // check the root has no any members
+    const group = root[getRandomArbitrary(root.length - 1)]!;
     const groupMap = await findGroupMapByName(group.name!);
     expect(Object.entries(groupMap)).toHaveLength(1);
     expect(groupMap).toEqual({

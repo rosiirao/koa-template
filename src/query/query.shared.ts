@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 
 export const LENGTH_MAX_NAME = 32;
 export const DEFAULT_ROW_COUNT = 20;
+export const MAX_CONNECTIONS = 5;
 
 /**
  * Get a query input for an optional value.
@@ -17,7 +18,7 @@ export const queryInput = <T>(
 
 type PickMatchingProperties<T, V> = Pick<
   T,
-  { [K in keyof T]-?: T[K] extends V ? K : never }[keyof T]
+  { [K in keyof T]: Required<T>[K] extends V ? K : never }[keyof T]
 >;
 
 type OrderByInput = {

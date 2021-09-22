@@ -29,7 +29,7 @@ model Profile {
 model User {
   id    Int     @id @default(autoincrement())
   email String  @unique
-  name  String? @unique
+  name  String  @unique
   alias String?
 
   createdAt  DateTime    @default(now())
@@ -60,7 +60,7 @@ model Group {
 
 model GroupInherit {
   memberId Int
-  member  Group @relation("member", fields: [memberId], references: [id])
+  member   Group @relation("member", fields: [memberId], references: [id])
 
   unitId Int
   unit   Group @relation("unit", fields: [unitId], references: [id])

@@ -8,6 +8,8 @@ import {
 import {
   create as createUser,
   createMany as createManyUser,
+  findAll,
+  findUnique,
 } from '../../src/query/user.query';
 import { createMany as createRole } from '../../src/query/role.query';
 import { Application, Prisma, User } from '.prisma/client';
@@ -38,12 +40,18 @@ export const seedRole = async (): Promise<Prisma.BatchPayload> => {
   return roleCreated;
 };
 
-export const seedAdmin = async (): Promise<User> => {
+export const seedAdmin = async (): Promise<User | undefined> => {
+  const email = 'admin@example.com';
+  const admin = await findUnique({ email });
+  if (admin !== null) {
+    console.log('The account admin exists, skip seedAdmin');
+    return undefined;
+  }
   const password = nanoid(8);
   // print the default admin password to user.
   console.log(`Use admin:${password} to login`);
   const user: Parameters<typeof createUser>[0] = {
-    email: 'admin@example.com',
+    email,
     password: await hashPassword(password),
   };
   return createUser(user);
@@ -53,8 +61,10 @@ export const seedResource = async (applicationId: number): Promise<unknown> => {
   return createResource(nextId(), applicationId, { readers: [], authors: [] });
 };
 
-export const seedUser = async (): Promise<Prisma.BatchPayload> => {
-  const user = await userList(2);
+export const seedUser = async (
+  count = 10_000
+): Promise<Prisma.BatchPayload> => {
+  const user = await userList(count);
   const many = await createManyUser(
     user.map(({ email, password, ...rest }) => ({
       email,
@@ -66,10 +76,25 @@ export const seedUser = async (): Promise<Prisma.BatchPayload> => {
 };
 
 export async function userList(
-  count = 10_000
+  count: number
 ): Promise<
   { name: string; alias?: string; email: string; password: string }[]
 > {
+  if (count <= 0)
+    throw new Error(
+      `The number of randomly generate user name must great than 0, got (${count})`
+    );
+
+  /**
+   * the records in db
+   */
+  const backend = (await findAll()).reduce<
+    [email: Set<string>, name: Set<string>]
+  >(
+    ([m, n], { email, name }) => (m.add(email), n.add(name), [m, n]),
+    [new Set(), new Set()]
+  );
+
   const defaultPassword = '1234';
   const nextName = (function* () {
     while (true) {
@@ -92,12 +117,16 @@ export async function userList(
   while (nameSet.size < count) {
     let name = nextName.next().value;
     let alias: string | undefined = undefined;
-    while (nameSet.has(name)) {
-      name = nextName.next().value;
+    while (nameSet.has(name) || backend[1].has(name)) {
       alias = name;
+      name = nextName.next().value;
     }
     nameSet.add(name);
-    const email = nextEmail.next(name).value;
+    let email = nextEmail.next(name).value;
+    while (backend[0].has(email)) {
+      // if email conflict, simply prepend _ to the it
+      email = '_' + email;
+    }
     user.push({
       name,
       ...(alias ? { alias } : undefined),

@@ -1,5 +1,6 @@
 import { User, Post, Profile, Credential, Prisma } from '@prisma/client';
 import createHttpError from 'http-errors';
+import { sliceMap } from '../utils';
 
 import prisma from './client';
 import { queryInput, orderByInput } from './query.shared';
@@ -20,7 +21,6 @@ export const create = async ({
   password,
   others = {
     name: email.replace(/@.*$/, ''),
-    alias: email.replace(/@.*$/, ''),
   },
 }: UserCreateInput): Promise<User> => {
   const { name, alias, group } = others;
@@ -46,22 +46,20 @@ export const create = async ({
     (value): value is { groupId: number } => value.groupId !== undefined
   );
 
-  const user = await prisma.user.create({
+  const user = prisma.user.create({
     data: {
       name,
       ...queryInput('alias', alias),
       email,
-      group: {
-        createMany: {
-          data: groupId,
-        },
-      },
-      posts: {
-        create: { title: 'Hello World' },
-      },
-      profile: {
-        create: { bio: 'I like turtles' },
-      },
+      ...(groupId.length > 0
+        ? {
+            group: {
+              createMany: {
+                data: groupId,
+              },
+            },
+          }
+        : undefined),
       credential: {
         create: {
           password,
@@ -70,44 +68,21 @@ export const create = async ({
     },
   });
 
-  /* const post =  */ await prisma.post.update({
-    where: { id: user.id },
-    data: { published: true },
-  });
-
   return user;
 };
 
-export const createMany = (
+export const createMany = async (
   user: UserCreateInput[]
 ): Promise<Prisma.BatchPayload> => {
-  const userInput = user.map(({ others, email, ...rest }) => {
-    const { name, alias } = others ?? { name: email.replace(/@.*$/, '') };
-
-    const input = {
-      name,
-      email,
-      ...(alias ? { alias } : undefined),
-      ...rest,
+  // avoid pool_timeout, we slice the all create actions by 50.
+  const slice = sliceMap(user, 50);
+  return slice.reduce<Promise<{ count: number }>>(async (acc, slice) => {
+    const created = (await acc).count;
+    const sliceCreate = await Promise.all(slice.map<Promise<User>>(create));
+    return {
+      count: created + sliceCreate.length,
     };
-
-    if (
-      Object.entries(input).some((entry) => {
-        const [key, value] = entry;
-        if (typeof value === 'string' && key !== 'password') {
-          return value.length > 32;
-        }
-        return false;
-      })
-    ) {
-      throw new Error('string value length get bigger than 32');
-    }
-
-    return input;
-  });
-  return prisma.user.createMany({
-    data: userInput,
-  });
+  }, Promise.resolve({ count: 0 }));
 };
 
 type UserResult = User & {
