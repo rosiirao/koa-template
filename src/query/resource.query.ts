@@ -1,5 +1,5 @@
 import prisma from './client';
-import { Prisma } from '.prisma/client';
+import { Prisma, Application } from '.prisma/client';
 import { queryInput, orderByInput } from './query.shared';
 import { OrderByQuery } from './query.shared';
 
@@ -61,6 +61,18 @@ export const createApplication = async (
   }
   return prisma.application.create({
     data: { name },
+  });
+};
+
+export const findApplication = async (option: {
+  name?: string;
+  id?: number;
+}): Promise<Application[]> => {
+  if (option.id === undefined && option.name === undefined) {
+    throw new Error('Query application need id or name');
+  }
+  return prisma.application.findMany({
+    where: option,
   });
 };
 

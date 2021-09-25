@@ -1,14 +1,21 @@
 import { seedGroup } from './seed.group';
-import { seedAdmin, seedUser } from './seed.user';
+import { seedAdmin, seedUser, seedUserGroup } from './seed.user';
 
 import { findAll } from '../../src/query/user.query';
+import { rangeList } from '../../src/utils';
 if (process.argv.length === 0) process.exit(0);
 
 const start = process.argv.indexOf('--');
 
 const argv = process.argv.slice(start + 1);
 
-if (argv.includes('group')) {
+enum SEED_OPTION {
+  GROUP = 'group',
+  USER = 'user',
+  GROUP_ASSIGN = 'group_assign',
+}
+
+if (argv.includes(SEED_OPTION.GROUP)) {
   console.log('seed random groups start ...');
   const seedGroupAction = async () => {
     await seedGroup(2, 5);
@@ -18,20 +25,22 @@ if (argv.includes('group')) {
   seedGroupAction().then(() => console.log('seed groups completed'));
 }
 
-if (argv.includes('user')) {
+if (argv.includes(SEED_OPTION.USER)) {
   console.log('seed random users start ...');
   const seedUserAction = async () => {
     await seedAdmin();
-    return seedUser();
+    return seedUser(2000);
   };
   seedUserAction().then(
     (x) => (console.dir(x, ' '), console.log('seed users completed'))
   );
 }
 
-// TODO: test if number of connections is decided by mariadb configuration
+if (argv.includes(SEED_OPTION.GROUP_ASSIGN)) {
+  console.log('assign user to group start ...');
+  seedUserGroup().then(() => console.log('assign user to group completed'));
+}
 
-// TODO: seed UserGroup relation
 // TODO: seed application
 // TODO: seed Role and Role inherit
 // TODO: seed privileges
@@ -39,13 +48,7 @@ if (argv.includes('user')) {
 
 // TODO: seed resource and acl
 
-// TODO: test find all resources by user.
-// TODO: load testing
-
-// TODO: Database healthy check periodically
-
 if (argv.includes('test')) {
-  console.log('');
   const listOne = async () => {
     return findAll(1, {
       orderBy: 'id',
@@ -53,4 +56,23 @@ if (argv.includes('test')) {
     });
   };
   listOne().then((x) => console.dir(x, ' '));
+
+  let count = 0;
+  const MAX_CONNECTIONS = 5;
+  // test 10_000 query
+  console.log('prisma findAll(20) with 10_000 async');
+  // make the max connections successful and then make the 10_000 async query work
+  Promise.all(
+    rangeList(MAX_CONNECTIONS, () => {
+      return findAll(20).then(() => count++);
+    })
+  ).then(() => {
+    rangeList(10_000, () => {
+      findAll(20).then(() => count++);
+    });
+  });
+
+  process.on('exit', () => {
+    console.log('have find count:', count);
+  });
 }

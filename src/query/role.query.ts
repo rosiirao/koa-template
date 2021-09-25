@@ -1,7 +1,6 @@
 import { Prisma, Role } from '@prisma/client';
-
 import prisma from './client';
-
+import { enumerableFlat } from './group.query';
 import { verifyName } from './query.shared';
 
 export const create = async (
@@ -27,7 +26,7 @@ export const createMany = async (
   });
 };
 
-export const inherit = async (
+export const createInherit = async (
   data: Prisma.Enumerable<{
     inheritId: number;
     roleId: number;
@@ -35,6 +34,46 @@ export const inherit = async (
 ): Promise<Prisma.BatchPayload> => {
   return prisma.roleInherit.createMany({
     data,
+  });
+};
+
+export const inheritTo = async (
+  role: Prisma.Enumerable<string>,
+  inherit: string,
+  applicationId: number
+): Promise<void> => {
+  const assignee = await prisma.role.findMany({
+    where: {
+      name: {
+        in: enumerableFlat(role),
+      },
+      applicationId,
+      assignee: {
+        none: {
+          inherit: {
+            name: inherit,
+          },
+        },
+      },
+    },
+    select: {
+      id: true,
+    },
+  });
+  await prisma.role.update({
+    where: {
+      name_applicationId: {
+        name: inherit,
+        applicationId,
+      },
+    },
+    data: {
+      inherit: {
+        createMany: {
+          data: assignee.map(({ id }) => ({ roleId: id })),
+        },
+      },
+    },
   });
 };
 
