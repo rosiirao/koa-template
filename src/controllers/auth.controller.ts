@@ -17,11 +17,13 @@ const hashPassword = async (password: string) => {
 type Conf = {
   PUBLIC_KEY?: string;
   PRIVATE_KEY?: string;
+  JWT_URN?: string;
 };
 
-const { PUBLIC_KEY, PRIVATE_KEY }: Conf = config.has('services.auth')
+const { PUBLIC_KEY, PRIVATE_KEY, JWT_URN }: Conf = config.has('services.auth')
   ? config.get('services.auth')
   : {};
+const JWT_URN_PREFIX = JWT_URN ? `${JWT_URN}:` : '';
 
 import createHttpError from 'http-errors';
 import { corsHeaders } from './cors';
@@ -82,14 +84,14 @@ const createJWT = async function (username: string, id: string) {
     throw createHttpError(500, new Error('Private key not found!'));
   }
   const token = await new SignJWT({
-    'urn:notacup:claim': true,
+    [`${JWT_URN_PREFIX}claim`]: true,
     name: username,
   })
     .setProtectedHeader({ alg: 'RS512' })
     .setSubject(id)
     .setIssuedAt()
-    .setIssuer('urn:notacup:dev')
-    .setAudience('urn:notacup:any')
+    .setIssuer(`${JWT_URN_PREFIX}dev`)
+    .setAudience(`${JWT_URN_PREFIX}any`)
     .setExpirationTime('1h')
     .sign(privateKey);
 
@@ -218,7 +220,7 @@ export const changePasswordAuth: Router.Middleware<IUserState> = async (
   const challengeCode = nanoid(64);
   const { username } = ctx.request.body;
   const token = new SignJWT({
-    'urn:notacup:claim': true,
+    [`${JWT_URN_PREFIX}claim`]: true,
     code: challengeCode,
   })
     .setSubject(username)
