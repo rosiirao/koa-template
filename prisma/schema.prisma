@@ -41,7 +41,7 @@ model User {
 
   group      GroupAssignment[]
   role       RoleUserAssignment[]
-  priviledge PriviledgeUserAssignment[]
+  priviledge PrivilegeUserAssignment[]
 
 }
 
@@ -55,7 +55,7 @@ model Group {
 
   user          GroupAssignment[]
   role          RoleGroupAssignment[]
-  priviledge    PriviledgeGroupAssignment[]
+  privilege    PrivilegeGroupAssignment[]
   groupResource ResourceAccessControl[]
 }
 
@@ -128,7 +128,7 @@ model Role {
   name          String                     @koaTemplate.VarChar(32)
   applicationId Int
   application   Application                @relation(fields: [applicationId], references: [id])
-  assignment    PriviledgeRoleAssignment[]
+  assignment    PrivilegeRoleAssignment[]
 
   assignee     RoleInherit[]           @relation("assignee")
   inherit      RoleInherit[]           @relation("inherit")
@@ -139,34 +139,35 @@ model Role {
   @@unique([name, applicationId])
 }
 
-model PriviledgeRoleAssignment {
+model PrivilegeRoleAssignment {
   id     Int  @id @default(autoincrement())
   roleId Int
   role   Role @relation(fields: [roleId], references: [id])
 
-  priviledge Priviledge
+  privilege Privilege
 
-  @@unique([roleId, priviledge])
+  @@unique([roleId, privilege])
+	@@map("PriviledgeRoleAssignment")
 }
 
-model PriviledgeUserAssignment {
+model PrivilegeUserAssignment {
   id     Int  @id @default(autoincrement())
   userId Int
   user   User @relation(fields: [userId], references: [id])
 
-  priviledge Priviledge
+  privilege Privilege
 
-  @@unique([userId, priviledge])
+  @@unique([userId, privilege])
 }
 
-model PriviledgeGroupAssignment {
+model PrivilegeGroupAssignment {
   id      Int   @id @default(autoincrement())
   groupId Int
   group   Group @relation(fields: [groupId], references: [id])
 
-  priviledge Priviledge
+  privilege Privilege
 
-  @@unique([groupId, priviledge])
+  @@unique([groupId, privilege])
 }
 
 model RoleInherit {
@@ -199,10 +200,10 @@ model RoleGroupAssignment {
   @@id([groupId, roleId])
 }
 
-enum Priviledge {
+enum Privilege {
   NONE
   READ_RESOURCE
   CREATE_RESOURCE
   MODIFY_RESOURCE
-  DELETE_RESUORCE
+  DELETE_RESOURCE
 }
