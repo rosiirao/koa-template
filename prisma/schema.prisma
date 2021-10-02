@@ -41,7 +41,7 @@ model User {
 
   group      GroupAssignment[]
   role       RoleUserAssignment[]
-  priviledge PriviledgeAssignment[]
+  priviledge PriviledgeUserAssignment[]
 
 }
 
@@ -55,6 +55,7 @@ model Group {
 
   user          GroupAssignment[]
   role          RoleGroupAssignment[]
+  priviledge    PriviledgeGroupAssignment[]
   groupResource ResourceAccessControl[]
 }
 
@@ -123,11 +124,11 @@ model Application {
 
 // The role only works with application, and have unique name in every appliction.
 model Role {
-  id            Int                    @id @default(autoincrement())
-  name          String                 @koaTemplate.VarChar(32)
+  id            Int                        @id @default(autoincrement())
+  name          String                     @koaTemplate.VarChar(32)
   applicationId Int
-  application   Application            @relation(fields: [applicationId], references: [id])
-  assignment    PriviledgeAssignment[]
+  application   Application                @relation(fields: [applicationId], references: [id])
+  assignment    PriviledgeRoleAssignment[]
 
   assignee     RoleInherit[]           @relation("assignee")
   inherit      RoleInherit[]           @relation("inherit")
@@ -138,16 +139,34 @@ model Role {
   @@unique([name, applicationId])
 }
 
-model PriviledgeAssignment {
+model PriviledgeRoleAssignment {
   id     Int  @id @default(autoincrement())
   roleId Int
   role   Role @relation(fields: [roleId], references: [id])
+
+  priviledge Priviledge
+
+  @@unique([roleId, priviledge])
+}
+
+model PriviledgeUserAssignment {
+  id     Int  @id @default(autoincrement())
   userId Int
   user   User @relation(fields: [userId], references: [id])
 
   priviledge Priviledge
 
-  @@unique([roleId, userId, priviledge])
+  @@unique([userId, priviledge])
+}
+
+model PriviledgeGroupAssignment {
+  id      Int   @id @default(autoincrement())
+  groupId Int
+  group   Group @relation(fields: [groupId], references: [id])
+
+  priviledge Priviledge
+
+  @@unique([groupId, priviledge])
 }
 
 model RoleInherit {

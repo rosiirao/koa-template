@@ -3,6 +3,7 @@ import { seedAdmin, seedUser, seedUserGroup } from './seed.user';
 
 import { findAll } from '../../src/query/user.query';
 import { rangeList } from '../../src/utils';
+import { seedRole } from './seed.role';
 if (process.argv.length === 0) process.exit(0);
 
 const start = process.argv.indexOf('--');
@@ -13,6 +14,8 @@ enum SEED_OPTION {
   GROUP = 'group',
   USER = 'user',
   GROUP_ASSIGN = 'group_assign',
+  ROLE = 'role',
+  PRIVILEGE = 'privilege',
 }
 
 if (argv.includes(SEED_OPTION.GROUP)) {
@@ -41,9 +44,19 @@ if (argv.includes(SEED_OPTION.GROUP_ASSIGN)) {
   seedUserGroup().then(() => console.log('assign user to group completed'));
 }
 
+if (argv.includes(SEED_OPTION.ROLE)) {
+  console.log('seed random role start ...');
+  seedRole().then(
+    (x) => (console.dir(x, ' '), console.log('seed roles completed'))
+  );
+}
+
+if (argv.includes(SEED_OPTION.PRIVILEGE)) {
+  // todo: every role at least grant read priv
+  // todo: some user or group grand some priv
+}
+
 // TODO: seed application
-// TODO: seed Role and Role inherit
-// TODO: seed privileges
 // TODO: seed UserRole, GroupRole
 
 // TODO: seed resource and acl

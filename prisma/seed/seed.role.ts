@@ -1,12 +1,15 @@
 import { Application, Prisma } from '@prisma/client';
-import { createMany as createRole } from '../../src/query/role.query';
+import {
+  createMany as createRole,
+  inheritTo,
+} from '../../src/query/role.query';
 import {
   createApplication,
   createResource,
   findApplication,
 } from '../../src/query/resource.query';
 import { randomName } from './seed.shared';
-import { nextId } from '../../src/utils';
+import { debounceAsyncExecutor, nextId } from '../../src/utils';
 
 /**
  * Seed role for APP *Administrator*
@@ -20,33 +23,40 @@ const seedAdministrator = () => {
   return createApplication(APP_NAME);
 };
 
-/**
- * @TODO create inherit relation
- */
 export const seedRole = async (): Promise<Prisma.BatchPayload> => {
   const role = roleHierarchyList(50);
   const application =
     (await findApplication({ name: APP_NAME }))[0] ??
     (await seedAdministrator());
 
-  const updateInput = [...role]
-    .reduce<Map<string, { name: string; applicationId: number }>>(
-      (acc, fullname) => {
-        fullname.split(/\//g).forEach((name) => {
-          acc.set(name, {
-            name,
-            applicationId: application.id,
-          });
+  type Assignee = string;
+  type RoleInput = Map<string, { name: string; applicationId: number }>;
+  type RoleHierarchyInput = Map<string, Set<Assignee>>;
+  const updateInput = [...role].reduce<[RoleInput, RoleHierarchyInput]>(
+    ([role, hierarchy], fullname) => {
+      const names = fullname.split(/\//g);
+      names.forEach((name) => {
+        role.set(name, {
+          name,
+          applicationId: application.id,
         });
-        return acc;
-      },
-      new Map()
-    )
-    .values();
-  const roleCreated = createRole([...updateInput]);
+      });
+      names.reduceRight<string | undefined>((inherit, name) => {
+        if (inherit === undefined) return name;
+        hierarchy.set(inherit, (hierarchy.get(inherit) ?? new Set()).add(name));
+        return name;
+      }, undefined);
+      return [role, hierarchy];
+    },
+    [new Map(), new Map()]
+  );
+  const roleCreated = await createRole([...updateInput[0].values()]);
 
-  // create inherit relation
-
+  const executor = debounceAsyncExecutor<void>(50);
+  updateInput[1].forEach((assignee, inherit) => {
+    executor.add(() => inheritTo([...assignee], inherit, application.id));
+  });
+  await executor.finish();
   return roleCreated;
 };
 
@@ -55,8 +65,11 @@ export const seedRole = async (): Promise<Prisma.BatchPayload> => {
  */
 export function roleHierarchyList(roleCount = 50): Iterable<string> {
   const roleFullName = new Set<string>();
+  const randomRoleName = () =>
+    randomName('/').replace(/^\/+|(?<=\/)\/+|\/+$/gi, '');
   for (let i = 0; i < roleCount; i++) {
-    const newRole = randomName('/').replace(/^\/+|(?<=\/)\/+|\/+$/gi, '');
+    let newRole = randomRoleName();
+    if (!newRole.includes('/')) newRole = `${newRole}/${randomRoleName()}`;
     roleFullName.add(newRole);
   }
   return roleFullName;
