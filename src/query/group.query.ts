@@ -377,23 +377,31 @@ export const findMember = async (
 
 export const findRoot = async (
   count = DEFAULT_ROW_COUNT,
-  startId?: number
+  option = {} as {
+    start?: number;
+    skip?: number;
+  }
 ): Promise<Array<Element<MappedGroup>>> => {
+  const { start = 1, skip = 1 } = option;
   return prisma.group.findMany({
     where: rootCriteria,
-    ...(startId !== undefined && startId > 1
-      ? {
-          cursor: {
-            id: startId,
-          },
-        }
-      : undefined),
+    ...queryInput('skip', skip, skip > 1),
+    ...queryInput(
+      'cursor',
+      start > 1
+        ? {
+            id: start,
+          }
+        : undefined
+    ),
     take: count,
   });
 };
 
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export const getGroup = (id: number, criteria?: Prisma.GroupSelect) => {
+export const getGroup = (
+  id: number,
+  criteria?: Prisma.GroupSelect
+): PrismaPromise<Group | null> => {
   return prisma.group.findUnique({
     where: { id },
     ...queryInput('select', criteria),
@@ -457,19 +465,17 @@ export const getGroupMember = async (
     unit: { select: { memberId: true } },
   })) as GroupWithMember | null;
   if (group === null) {
-    throw new Error(
-      `GetGroupFullName meet error: the group of id (${id}) not found`
-    );
+    throw new Error(`The group with id (${id}) not found`);
   }
   return group;
 };
 
-export const remove = async (
+export async function remove(
   name: FullName,
   option = {
     recursive: false,
   }
-): Promise<Prisma.BatchPayload> => {
+): Promise<Prisma.BatchPayload> {
   const groupMap = await findGroupMapByName(name, { selfMember: true });
   const group = itemOfEnumerable(groupMap[name]);
   if (group === undefined) return { count: 0 };
@@ -542,66 +548,65 @@ export const remove = async (
     },
   });
   return { count: count + 1 };
-};
+}
 
-export const removeMany = async (
+export async function removeMany(
   name: FullName[],
   option = {
     recursive: false,
   }
-): Promise<Prisma.BatchPayload> => {
+): Promise<Prisma.BatchPayload> {
   // call remove on each name, and summarize the results
   return (await Promise.all(name.map((n) => remove(n, option)))).reduce<{
     count: number;
   }>(({ count: summarize }, { count }) => ({ count: count + summarize }), {
     count: 0,
   });
-};
+}
 
-export const appendUser = (
+export function appendUser(
   userId: Prisma.Enumerable<number>,
   groupId: number
-): PrismaPromise<Prisma.BatchPayload> => {
+): PrismaPromise<Prisma.BatchPayload> {
   return prisma.groupAssignment.createMany({
     data: enumerableFlat(userId).map<{ userId: number; groupId: number }>(
       (userId) => ({ userId, groupId })
     ),
     skipDuplicates: true,
   });
-};
+}
 
-export const removeUser = (
+export function removeUser(
   userId: Prisma.Enumerable<number>,
   groupId: number
-): PrismaPromise<Prisma.BatchPayload> => {
+): PrismaPromise<Prisma.BatchPayload> {
   return prisma.groupAssignment.createMany({
     data: enumerableFlat(userId).map<{ userId: number; groupId: number }>(
       (userId) => ({ userId, groupId })
     ),
     skipDuplicates: true,
   });
-};
+}
 
-export const moveUser = async (
+export async function moveUser(
   userId: Prisma.Enumerable<number>,
   fromGroupId: number,
   toGroupId: number
-): Promise<Prisma.BatchPayload> => {
+): Promise<Prisma.BatchPayload> {
   if (fromGroupId === toGroupId)
     throw new Error(
       `move user between group can't indicate the same group id: (${fromGroupId})`
     );
-  return prisma
-    .$transaction([
-      removeUser(userId, fromGroupId),
-      appendUser(userId, toGroupId),
-    ])
-    .then(([removed, appended]) => ({
-      count: removed.count + appended.count,
-    }));
-};
+  const [removed, appended] = await prisma.$transaction([
+    removeUser(userId, fromGroupId),
+    appendUser(userId, toGroupId),
+  ]);
+  return {
+    count: removed.count + appended.count,
+  };
+}
 
-export const listUser = async (
+export async function listUser(
   groupId: number,
   userCriteria = {
     id: true,
@@ -609,7 +614,7 @@ export const listUser = async (
     email: true,
     alias: true,
   } as Prisma.UserSelect
-): Promise<Array<Partial<User>>> => {
+): Promise<Array<Partial<User>>> {
   return prisma.user.findMany({
     where: {
       group: {
@@ -620,4 +625,4 @@ export const listUser = async (
     },
     select: userCriteria,
   });
-};
+}

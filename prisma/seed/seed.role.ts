@@ -23,11 +23,12 @@ const seedAdministrator = () => {
   return createApplication(APP_NAME);
 };
 
+export const getApplication = async (): Promise<Application> =>
+  (await findApplication({ name: APP_NAME }))[0] ?? (await seedAdministrator());
+
 export const seedRole = async (): Promise<Prisma.BatchPayload> => {
   const role = roleHierarchyList(50);
-  const application =
-    (await findApplication({ name: APP_NAME }))[0] ??
-    (await seedAdministrator());
+  const application = await getApplication();
 
   type Assignee = string;
   type RoleInput = Map<string, { name: string; applicationId: number }>;

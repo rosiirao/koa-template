@@ -55,7 +55,7 @@ model Group {
 
   user          GroupAssignment[]
   role          RoleGroupAssignment[]
-  privilege    PrivilegeGroupAssignment[]
+  privilege     PrivilegeGroupAssignment[]
   groupResource ResourceAccessControl[]
 }
 
@@ -109,7 +109,6 @@ model ResourceAccessControl {
   resourceId Int
   resource   Resource @relation(fields: [resourceId], references: [id])
 
-
   owner  Boolean @default(false)
   author Boolean @default(false)
   reader Boolean @default(false)
@@ -122,12 +121,12 @@ model Application {
   role     Role[]
 }
 
-// The role only works with application, and have unique name in every appliction.
+// The role only works with application, and have unique name in every application.
 model Role {
-  id            Int                        @id @default(autoincrement())
-  name          String                     @koaTemplate.VarChar(32)
+  id            Int                       @id @default(autoincrement())
+  name          String                    @koaTemplate.VarChar(32)
   applicationId Int
-  application   Application                @relation(fields: [applicationId], references: [id])
+  application   Application               @relation(fields: [applicationId], references: [id])
   assignment    PrivilegeRoleAssignment[]
 
   assignee     RoleInherit[]           @relation("assignee")
@@ -140,34 +139,30 @@ model Role {
 }
 
 model PrivilegeRoleAssignment {
-  id     Int  @id @default(autoincrement())
   roleId Int
   role   Role @relation(fields: [roleId], references: [id])
 
   privilege Privilege
 
-  @@unique([roleId, privilege])
-	@@map("PriviledgeRoleAssignment")
+  @@id([roleId, privilege])
 }
 
 model PrivilegeUserAssignment {
-  id     Int  @id @default(autoincrement())
   userId Int
   user   User @relation(fields: [userId], references: [id])
 
   privilege Privilege
 
-  @@unique([userId, privilege])
+  @@id([userId, privilege])
 }
 
 model PrivilegeGroupAssignment {
-  id      Int   @id @default(autoincrement())
   groupId Int
   group   Group @relation(fields: [groupId], references: [id])
 
   privilege Privilege
 
-  @@unique([groupId, privilege])
+  @@id([groupId, privilege])
 }
 
 model RoleInherit {

@@ -1,7 +1,7 @@
-import { Prisma, Role } from '@prisma/client';
+import { Prisma, PrismaPromise, Role } from '@prisma/client';
 import prisma from './client';
 import { enumerableFlat } from './group.query';
-import { verifyName } from './query.shared';
+import { DEFAULT_ROW_COUNT, queryInput, verifyName } from './query.shared';
 
 export const create = async (
   name: string,
@@ -140,3 +140,26 @@ export const findRole = async (
   }
   return role;
 };
+
+export function listRole(
+  applicationId: number,
+  count = DEFAULT_ROW_COUNT,
+  option = {} as {
+    start?: number;
+    skip?: number;
+  }
+): PrismaPromise<Array<{ id: number; name: string }>> {
+  const { start = 1, skip = 1 } = option;
+  return prisma.role.findMany({
+    where: {
+      applicationId,
+    },
+    take: count,
+    ...queryInput('skip', skip, skip > 1),
+    ...queryInput('cursor', { id: start }, start > 1),
+    select: {
+      id: true,
+      name: true,
+    },
+  });
+}

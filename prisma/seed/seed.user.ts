@@ -119,7 +119,7 @@ export async function seedUserGroup(): Promise<void> {
   // find the last user, get the greatest number.
   const { id: maxUserId } =
     (
-      await findAll(1, {
+      await findAll(1, undefined, {
         orderBy: 'id',
         desc: true,
       })
@@ -137,7 +137,7 @@ export async function seedUserGroup(): Promise<void> {
     fetchCount === rootNumber;
     fetchCount = org.length - fetchCount
   ) {
-    org.concat(await findRoot(rootNumber, org.at(-1)?.id));
+    org.concat(await findRoot(rootNumber, { start: org.at(-1)?.id ?? 1 }));
   }
   if (org.length === 0) {
     throw new Error('No group exists, make sure seed groups first');

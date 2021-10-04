@@ -1,4 +1,4 @@
-import { getRandomArbitrary } from '../utils';
+import { randomArbitrary } from '../utils';
 import {
   create,
   createMany,
@@ -10,7 +10,7 @@ import {
   itemOfEnumerable,
 } from './group.query';
 
-describe('group query unit test', () => {
+describe('group query test', () => {
   it('find group hierarchy by full name', async () => {
     const name = 'beijing/notes';
     // const group = getGroup();
@@ -65,7 +65,7 @@ describe('group query unit test', () => {
     }
 
     // check the root has no any members
-    const group = root[getRandomArbitrary(root.length - 1)]!;
+    const group = root[randomArbitrary(root.length - 1)]!;
     const groupMap = await findGroupMapByName(group.name!);
     expect(Object.entries(groupMap)).toHaveLength(1);
     expect(groupMap).toEqual({

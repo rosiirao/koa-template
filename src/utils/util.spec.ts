@@ -1,4 +1,4 @@
-import { debounceAsyncExecutor, getRandomArbitrary } from '.';
+import { debounceAsyncExecutor, randomArbitrary } from '.';
 import { nextId, sliceMap, rangeList, randomCharacter } from './util';
 
 describe('util test', () => {
@@ -30,7 +30,7 @@ describe('util test', () => {
 
   it('debounce async executor works', async () => {
     const quota = 50;
-    const rest = getRandomArbitrary(200);
+    const rest = randomArbitrary(200);
     const executor = debounceAsyncExecutor<number>(quota);
     rangeList(quota, () =>
       executor.add(() => new Promise((r) => setTimeout(() => r(1), 500)))

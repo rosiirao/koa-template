@@ -44,27 +44,41 @@ export const sliceMap = <T, R = Array<T>>(
  */
 export const rangeList = <R>(
   range: number,
-  mapItem = (x: number) => x as unknown as R,
+  mapItem = ((index: number) => index) as unknown as (
+    x: number,
+    acc?: Array<R>
+  ) => R,
   start = 0
 ): Array<R> => {
   if (start > range) return [];
   const r = [] as Array<R>;
   for (let i = 0; i < range; i++) {
-    r.push(mapItem(i));
+    r.push(mapItem(i, r));
   }
   return r;
 };
 
 /**
- * Limit the number of the async executions under an limit count, when it reach the quota, wait util previous resolved
- * @TODO If reach the quota, start next one once one of previous resolved
+ * AsyncExecutor manage the async executions
  */
-export const debounceAsyncExecutor = <T>(
-  quota: number
-): {
+export interface AsyncExecutor<T> {
+  /**
+   * Add execution to the queue
+   * @returns promise of the result of the execution
+   */
   add: (execution: () => Promise<T>) => Promise<T>;
+  /**
+   * Finish the executor, and close the queue
+   * @returns promise of the result contains every execution
+   */
   finish: () => Promise<Array<T>>;
-} => {
+}
+
+/**
+ * Limit the number of the async executions under an limit count, when it reach the quota, wait util previous resolved
+ * @todo If reach the quota, start next one once one of previous resolved
+ */
+export const debounceAsyncExecutor = <T>(quota: number): AsyncExecutor<T> => {
   let dice = 0,
     finished = false;
   const summary = [] as Array<Promise<T>>;
@@ -109,7 +123,7 @@ export const debounceAsyncExecutor = <T>(
 /**
  * Get a random int under the *max*, excluded, and *min*, the *min* is 0 default
  */
-export function getRandomArbitrary(max: number, min = 0): number {
+export function randomArbitrary(max: number, min = 0): number {
   return Math.floor(Math.random() * (max - 1 - min) + min);
 }
 
@@ -133,8 +147,8 @@ export function randomCharacter(
     maxLen
   );
 
-  const min = getRandomArbitrary(Math.floor(maxLen / 2));
-  const max = getRandomArbitrary(maxLen, Math.floor(maxLen / 2));
+  const min = randomArbitrary(Math.floor(maxLen / 2));
+  const max = randomArbitrary(maxLen, Math.floor(maxLen / 2));
   try {
     return nanoid().slice(min, max);
   } catch (e) {

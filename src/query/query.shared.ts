@@ -5,16 +5,35 @@ export const DEFAULT_ROW_COUNT = 20;
 export const MAX_CONNECTIONS = 5;
 
 /**
- * Get a query input for an optional value.
- * If value exists, return the query input object, or else return undefined.
- * So we can simply deconstruct it as the query parameter.
- * @example `...queryInput('take', count)  // count is optional`
+ * A function return type T or a value with type T
  */
-export const queryInput = <T>(
+type ResultExecution<T> = T | (() => T);
+
+/**
+ * Execute to get the result of [ResultExecution\<T\>]{@link ResultExecution<T>}
+ */
+export function resultExecute<T>(value: ResultExecution<T>): T {
+  if (typeof value === 'function') {
+    return (value as () => T)();
+  }
+  return value;
+}
+
+/**
+ * Get a query input for an optional value.
+ * If value exists and pass validator, return the query input object, or else return undefined.
+ * So we can simply deconstruct it as the query parameter.
+ * @example `queryInput('take', count)  // count is optional`
+ */
+export function queryInput<T>(
   key: string,
-  value?: T
-): undefined | { [key: string]: T } =>
-  value === undefined ? undefined : { [key]: value };
+  value?: T,
+  validator?: ResultExecution<boolean>
+): undefined | { [key: string]: T } {
+  return value === undefined || !resultExecute(validator)
+    ? undefined
+    : { [key]: value };
+}
 
 type PickMatchingProperties<T, V> = Pick<
   T,

@@ -4,6 +4,8 @@ import { seedAdmin, seedUser, seedUserGroup } from './seed.user';
 import { findAll } from '../../src/query/user.query';
 import { rangeList } from '../../src/utils';
 import { seedRole } from './seed.role';
+import { seedPrivilege } from './seed.privilege';
+
 if (process.argv.length === 0) process.exit(0);
 
 const start = process.argv.indexOf('--');
@@ -52,18 +54,18 @@ if (argv.includes(SEED_OPTION.ROLE)) {
 }
 
 if (argv.includes(SEED_OPTION.PRIVILEGE)) {
-  // todo: every role at least grant read priv
-  // todo: some user or group grand some priv
+  console.log('seed privilege start ...');
+  seedPrivilege().then(
+    (x) => (console.dir(x, ' '), console.log('seed privilege completed'))
+  );
 }
 
-// TODO: seed application
 // TODO: seed UserRole, GroupRole
-
 // TODO: seed resource and acl
 
 if (argv.includes('test')) {
   const listOne = async () => {
-    return findAll(1, {
+    return findAll(1, undefined, {
       orderBy: 'id',
       desc: true,
     });
