@@ -1,11 +1,11 @@
-import { findAll } from './user.query';
+import { listUser } from './user.query';
 
 describe('user.query test', () => {
   it('find all users can get all users', async () => {
     /**
      * the records in db
      */
-    const backend = (await findAll()).reduce<
+    const backend = (await listUser()).reduce<
       [email: Set<string>, name: Set<string>]
     >(
       ([m, n], { email, name }) => (m.add(email), n.add(name), [m, n]),

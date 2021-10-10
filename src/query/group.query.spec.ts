@@ -5,7 +5,7 @@ import {
   remove,
   removeMany,
   /* getGroup, */ findGroupMapByName,
-  findRoot,
+  listRoot,
   getGroup,
   itemOfEnumerable,
 } from './group.query';
@@ -41,19 +41,19 @@ describe('group query test', () => {
 
   it('find all root works', async () => {
     const rootNumber = 2;
-    const root = await findRoot(2);
+    const root = await listRoot(2);
     let times = 0;
     for (
       let fetchCount = root.length;
       fetchCount === rootNumber;
       fetchCount = root.length - fetchCount, times++
     ) {
-      root.concat(await findRoot(rootNumber, root.at(-1)?.id));
+      root.concat(await listRoot(rootNumber, { skip: root.length }));
     }
     const idSet = new Set(root.map(({ id }) => id));
 
     // once get whole
-    const rootWholeOnce = await findRoot(root.length);
+    const rootWholeOnce = await listRoot(root.length);
 
     expect(root.length).toBeGreaterThanOrEqual(rootNumber * times);
     expect(root.length).toBe(idSet.size);

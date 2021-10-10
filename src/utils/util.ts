@@ -64,12 +64,12 @@ export const rangeList = <R>(
 export interface AsyncExecutor<T> {
   /**
    * Add execution to the queue
-   * @returns promise of the result of the execution
+   * @returns tje promise of the result of the execution
    */
   add: (execution: () => Promise<T>) => Promise<T>;
   /**
    * Finish the executor, and close the queue
-   * @returns promise of the result contains every execution
+   * @returns the promise of the result contains every execution
    */
   finish: () => Promise<Array<T>>;
 }

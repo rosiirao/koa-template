@@ -88,15 +88,30 @@ export const orphan = () => 0;
  */
 export const revoke = () => 0;
 
-/**
- * @todo assign
- */
-export const assign = () => 0;
+export function assignUser(
+  roleId: number,
+  userId: Prisma.Enumerable<number>
+): PrismaPromise<Prisma.BatchPayload> {
+  return prisma.roleUserAssignment.createMany({
+    data: enumerableFlat(userId).map((userId) => ({ userId, roleId })),
+    skipDuplicates: true,
+  });
+}
 
-export const findRole = async (
+export function assignGroup(
+  roleId: number,
+  groupId: Prisma.Enumerable<number>
+): PrismaPromise<Prisma.BatchPayload> {
+  return prisma.roleGroupAssignment.createMany({
+    data: enumerableFlat(groupId).map((groupId) => ({ groupId, roleId })),
+    skipDuplicates: true,
+  });
+}
+
+export async function findRole(
   userId: number,
   applicationId: number
-): Promise<Iterable<Role['id']>> => {
+): Promise<Iterable<Role['id']>> {
   const roleFind = await prisma.role.findMany({
     where: {
       applicationId,
@@ -139,7 +154,7 @@ export const findRole = async (
     ].filter(filterAndAppend);
   }
   return role;
-};
+}
 
 export function listRole(
   applicationId: number,
@@ -162,4 +177,8 @@ export function listRole(
       name: true,
     },
   });
+}
+
+export function countRole(): PrismaPromise<number> {
+  return prisma.role.count();
 }

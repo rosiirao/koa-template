@@ -1,10 +1,11 @@
 import { seedGroup } from './seed.group';
 import { seedAdmin, seedUser, seedUserGroup } from './seed.user';
 
-import { findAll } from '../../src/query/user.query';
+import { listUser } from '../../src/query/user.query';
 import { rangeList } from '../../src/utils';
 import { seedRole } from './seed.role';
 import { seedPrivilege } from './seed.privilege';
+import { seedRoleAssign } from './seed.role.assign';
 
 if (process.argv.length === 0) process.exit(0);
 
@@ -18,6 +19,7 @@ enum SEED_OPTION {
   GROUP_ASSIGN = 'group_assign',
   ROLE = 'role',
   PRIVILEGE = 'privilege',
+  ROLE_ASSIGN = 'role_assign',
 }
 
 if (argv.includes(SEED_OPTION.GROUP)) {
@@ -42,8 +44,8 @@ if (argv.includes(SEED_OPTION.USER)) {
 }
 
 if (argv.includes(SEED_OPTION.GROUP_ASSIGN)) {
-  console.log('assign user to group start ...');
-  seedUserGroup().then(() => console.log('assign user to group completed'));
+  console.log('assign group to users start ...');
+  seedUserGroup().then(() => console.log('assign group to users completed'));
 }
 
 if (argv.includes(SEED_OPTION.ROLE)) {
@@ -60,12 +62,21 @@ if (argv.includes(SEED_OPTION.PRIVILEGE)) {
   );
 }
 
-// TODO: seed UserRole, GroupRole
+if (argv.includes(SEED_OPTION.ROLE_ASSIGN)) {
+  console.log('assign role to users and groups start ...');
+  seedRoleAssign().then(
+    (x) => (
+      console.dir(x, ' '),
+      console.log('assign role to users and groups completed')
+    )
+  );
+}
+
 // TODO: seed resource and acl
 
 if (argv.includes('test')) {
   const listOne = async () => {
-    return findAll(1, undefined, {
+    return listUser(1, undefined, {
       orderBy: 'id',
       desc: true,
     });
@@ -79,11 +90,11 @@ if (argv.includes('test')) {
   // make the max connections successful and then make the 10_000 async query work
   Promise.all(
     rangeList(MAX_CONNECTIONS, () => {
-      return findAll(20).then(() => count++);
+      return listUser(20).then(() => count++);
     })
   ).then(() => {
     rangeList(10_000, () => {
-      findAll(20).then(() => count++);
+      listUser(20).then(() => count++);
     });
   });
 

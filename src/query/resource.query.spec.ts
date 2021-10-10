@@ -5,7 +5,7 @@ import {
   // findAllResourcesByUser,
   updateResources,
 } from './resource.query';
-import { findAll } from './user.query';
+import { listUser } from './user.query';
 import prisma from './client';
 import { nextId } from '../utils';
 
@@ -19,7 +19,7 @@ describe.skip('resource query operation ', () => {
      * Set all users as readers and authors, then restore default state
      */
 
-    const users = await findAll(10, { orderBy: 'id', desc: true });
+    const users = await listUser(10, { orderBy: 'id', desc: true });
 
     if (users.length === 0) return;
     let [res] = await findAllResources(1, undefined, 1, {

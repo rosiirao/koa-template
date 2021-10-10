@@ -1,7 +1,7 @@
 import Router from '@koa/router';
 import createHttpError from 'http-errors';
 import compose from 'koa-compose';
-import { findAll, findUnique } from '../query/user.query';
+import { listUser, findUnique } from '../query/user.query';
 
 const router = new Router({
   prefix: '/user',
@@ -10,7 +10,7 @@ const router = new Router({
 router.get('/:id?', async (ctx) => {
   const { id } = ctx.params;
   if (id === '' || id === undefined) {
-    const allUsers = await findAll();
+    const allUsers = await listUser();
     ctx.type = '.json';
     ctx.body = JSON.stringify(allUsers, null, '  ');
     return;

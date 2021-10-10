@@ -5,6 +5,11 @@ export const DEFAULT_ROW_COUNT = 20;
 export const MAX_CONNECTIONS = 5;
 
 /**
+ * FullName is the name with hierarchy, e.g. dev/Beijing/root
+ */
+export type FullName = string;
+
+/**
  * A function return type T or a value with type T
  */
 type ResultExecution<T> = T | (() => T);
@@ -30,7 +35,7 @@ export function queryInput<T>(
   value?: T,
   validator?: ResultExecution<boolean>
 ): undefined | { [key: string]: T } {
-  return value === undefined || !resultExecute(validator)
+  return value === undefined || !(resultExecute(validator) ?? true)
     ? undefined
     : { [key]: value };
 }
@@ -51,10 +56,10 @@ export type OrderByQuery<T> = {
   desc?: boolean;
 };
 
-export const orderByInput = <T extends OrderByInput>(
+export function orderByInput<T extends OrderByInput>(
   query?: OrderByQuery<PickMatchingProperties<T, Prisma.SortOrder>>,
   defaultOrderBy?: keyof T
-): undefined | Prisma.Enumerable<T> => {
+): undefined | Prisma.Enumerable<T> {
   if (query?.orderBy === undefined && defaultOrderBy === undefined) {
     return undefined;
   }
@@ -64,13 +69,13 @@ export const orderByInput = <T extends OrderByInput>(
         [key]: (query?.desc ? 'desc' : 'asc') as Prisma.SortOrder,
       } as T)
     : undefined;
-};
+}
 
 /**
  * Get the hierarchy array from its full name, eg. dev/beijing/root => [root, beijing/root, dev/beijing/root]
  * it will verify every name, if not pass, throw an error.
  */
-export const hierarchyByName = (fullname: string): string[] | never => {
+export function hierarchyByName(fullname: FullName): string[] | never {
   const allNames = fullname.split(/\//g);
   const hierarchy = allNames.reduceRight((hierarchy, name) => {
     verifyName(name);
@@ -79,7 +84,7 @@ export const hierarchyByName = (fullname: string): string[] | never => {
     return hierarchy;
   }, [] as Array<string>);
   return hierarchy;
-};
+}
 
 /**
  * Verify name length, if it can't pass, then throw error.

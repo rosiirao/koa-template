@@ -4,11 +4,11 @@ import { debounceAsyncExecutor, rangeList } from '../../src/utils';
 import {
   create as createUser,
   createMany as createManyUser,
-  findAll,
+  listUser,
   findUnique,
 } from '../../src/query/user.query';
 
-import { appendUser, findRoot, findMember } from '../../src/query/group.query';
+import { appendUser, listRoot, findMember } from '../../src/query/group.query';
 
 import { Prisma, User } from '.prisma/client';
 import { randomName, getRandomArbitrary } from './seed.shared';
@@ -66,7 +66,7 @@ export async function userList(
   /**
    * the records in db
    */
-  const backend = (await findAll()).reduce<
+  const backend = (await listUser()).reduce<
     [email: Set<string>, name: Set<string>]
   >(
     ([m, n], { email, name }) => (m.add(email), n.add(name), [m, n]),
@@ -119,7 +119,7 @@ export async function seedUserGroup(): Promise<void> {
   // find the last user, get the greatest number.
   const { id: maxUserId } =
     (
-      await findAll(1, undefined, {
+      await listUser(1, undefined, {
         orderBy: 'id',
         desc: true,
       })
@@ -127,17 +127,17 @@ export async function seedUserGroup(): Promise<void> {
   if (maxUserId === undefined) {
     throw new Error('No user exists, make sure seed users first');
   }
-  const user = (await findAll(maxUserId)).map(({ id }) => id);
+  const user = (await listUser(maxUserId)).map(({ id }) => id);
 
   // test and get all root;
   const rootNumber = 1_000;
-  const org = await findRoot(rootNumber);
+  const org = await listRoot(rootNumber);
   for (
     let fetchCount = org.length;
     fetchCount === rootNumber;
     fetchCount = org.length - fetchCount
   ) {
-    org.concat(await findRoot(rootNumber, { start: org.at(-1)?.id ?? 1 }));
+    org.concat(await listRoot(rootNumber, { start: org.at(-1)?.id ?? 1 }));
   }
   if (org.length === 0) {
     throw new Error('No group exists, make sure seed groups first');

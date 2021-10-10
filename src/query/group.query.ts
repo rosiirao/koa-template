@@ -4,12 +4,12 @@ import { Element, ThenArg } from '../utils';
 
 import prisma from './client';
 
-import { hierarchyByName, DEFAULT_ROW_COUNT, queryInput } from './query.shared';
-
-/**
- * The name contains hierarchy, e.g. dev/beijing/root
- */
-export type FullName = string;
+import {
+  hierarchyByName,
+  DEFAULT_ROW_COUNT,
+  queryInput,
+  FullName,
+} from './query.shared';
 
 /**
  * The map of group's FullName and id
@@ -375,7 +375,7 @@ export const findMember = async (
   });
 };
 
-export const findRoot = async (
+export const listRoot = async (
   count = DEFAULT_ROW_COUNT,
   option = {} as {
     start?: number;
@@ -398,19 +398,25 @@ export const findRoot = async (
   });
 };
 
-export const getGroup = (
+export function countRoot(): PrismaPromise<number> {
+  return prisma.group.count({
+    where: rootCriteria,
+  });
+}
+
+export function getGroup(
   id: number,
   criteria?: Prisma.GroupSelect
-): PrismaPromise<Group | null> => {
+): PrismaPromise<Group | null> {
   return prisma.group.findUnique({
     where: { id },
     ...queryInput('select', criteria),
   });
-};
+}
 
-export const getGroupFullName = async (
+export async function getGroupFullName(
   id: number
-): Promise<Prisma.Enumerable<{ fullname: FullName; id: number[] }>> => {
+): Promise<Prisma.Enumerable<{ fullname: FullName; id: number[] }>> {
   type GroupWithUnit = {
     id: number;
     name: string;
@@ -449,11 +455,11 @@ export const getGroupFullName = async (
     })
     .flat();
   return fullname.length === 1 ? fullname[0] : fullname;
-};
+}
 
-export const getGroupMember = async (
+export async function getGroupMember(
   id: number
-): Promise<Element<MappedGroup> | null> => {
+): Promise<Element<MappedGroup> | null> {
   type GroupWithMember = {
     id: number;
     name: string;
@@ -468,7 +474,7 @@ export const getGroupMember = async (
     throw new Error(`The group with id (${id}) not found`);
   }
   return group;
-};
+}
 
 export async function remove(
   name: FullName,

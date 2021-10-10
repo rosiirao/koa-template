@@ -97,7 +97,7 @@ type UserResult = User & {
   profile: Profile | null;
 };
 
-export function findAll(
+export function listUser(
   count = DEFAULT_ROW_COUNT,
   option = {} as {
     start?: number;
@@ -190,4 +190,8 @@ export function findCredential(uniqueInput: {
   return prisma.credential.findUnique({
     where: uniqueInput,
   });
+}
+
+export function countUser(): PrismaPromise<number> {
+  return prisma.user.count();
 }
