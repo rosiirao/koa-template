@@ -62,7 +62,7 @@
     "eslint": "^7.32.0",
     "eslint-plugin-jest": "^24.5.2",
     "http-errors": "^1.8.0",
-    "jose": "^3.14.3",
+    "jose": "^4.1.0",
     "koa": "^2.13.0",
     "koa-body": "^4.2.0",
     "koa-compose": "^4.1.0",

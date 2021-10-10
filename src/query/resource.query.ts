@@ -9,7 +9,7 @@ type ResourceAccessControl = Partial<Record<'authors' | 'readers', number[]>>;
 type AccessControlFields = {
   author: boolean;
   reader: boolean;
-  userId: number | null;
+  userId: number;
 };
 
 type ResourceAccessControlRecord = AccessControlFields & {
@@ -141,14 +141,32 @@ export const findAllResources = async (
       ? undefined
       : {
           userResource: {
-            some: {
-              OR: [
-                {
-                  userId: user.id,
-                },
-                { groupId: { in: user.group } },
-                { roleId: { in: user.role } },
-              ],
+            every: {
+              userId: user.id,
+            },
+          },
+        };
+  const queryByGroup: Prisma.ResourceWhereInput | undefined =
+    user === undefined
+      ? undefined
+      : {
+          groupResource: {
+            every: {
+              groupId: {
+                in: user.group,
+              },
+            },
+          },
+        };
+  const queryByRole: Prisma.ResourceWhereInput | undefined =
+    user === undefined
+      ? undefined
+      : {
+          roleResource: {
+            every: {
+              roleId: {
+                in: user.role,
+              },
             },
           },
         };
@@ -156,6 +174,8 @@ export const findAllResources = async (
     where: {
       applicationId,
       ...queryByUser,
+      ...queryByGroup,
+      ...queryByRole,
     },
     select: {
       id: true,
@@ -172,10 +192,10 @@ export const findAllResourcesByUser = (
   userId: number,
   startFromId?: number,
   count?: number,
-  query?: OrderByQuery<Prisma.ResourceAccessControlOrderByWithAggregationInput>
+  query?: OrderByQuery<Prisma.UserResourceAccessControlAvgOrderByAggregateInput>
 ): Promise<ResourceAccessControlRecord[]> => {
   const orderBy =
-    orderByInput<Prisma.ResourceAccessControlOrderByWithAggregationInput>(
+    orderByInput<Prisma.UserResourceAccessControlAvgOrderByAggregateInput>(
       query,
       'userId'
     );
@@ -188,7 +208,7 @@ export const findAllResourcesByUser = (
             resourceId: startFromId,
           },
         };
-  return prisma.resourceAccessControl.findMany({
+  return prisma.userResourceAccessControl.findMany({
     where: {
       userId,
     },

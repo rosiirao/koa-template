@@ -19,7 +19,7 @@ describe.skip('resource query operation ', () => {
      * Set all users as readers and authors, then restore default state
      */
 
-    const users = await listUser(10, { orderBy: 'id', desc: true });
+    const users = await listUser(10, undefined, { orderBy: 'id', desc: true });
 
     if (users.length === 0) return;
     let [res] = await findAllResources(1, undefined, 1, {

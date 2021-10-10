@@ -30,8 +30,8 @@ import { corsHeaders } from './cors';
 import fs from 'fs';
 import crypto from 'crypto';
 
-import { SignJWT } from 'jose/jwt/sign';
-import { jwtVerify } from 'jose/jwt/verify';
+import { SignJWT } from 'jose';
+import { jwtVerify } from 'jose';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 // const importMeta = require('./helper.mjs');

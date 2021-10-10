@@ -37,12 +37,14 @@ model User {
   profile    Profile?
   credential Credential?
 
-  userResource ResourceAccessControl[]
+  userResource UserResourceAccessControl[]
 
-  group      GroupAssignment[]
-  role       RoleUserAssignment[]
-  priviledge PrivilegeUserAssignment[]
+  group     GroupAssignment[]
+  role      RoleUserAssignment[]
+  privilege PrivilegeUserAssignment[]
 
+  resourceId Int?                     @unique
+  Resource   AdministratorResourceId? @relation(fields: [resourceId], references: [id])
 }
 
 model Group {
@@ -56,7 +58,10 @@ model Group {
   user          GroupAssignment[]
   role          RoleGroupAssignment[]
   privilege     PrivilegeGroupAssignment[]
-  groupResource ResourceAccessControl[]
+  groupResource GroupResourceAccessControl[]
+
+  resourceId Int?                     @unique
+  Resource   AdministratorResourceId? @relation(fields: [resourceId], references: [id])
 }
 
 model GroupInherit {
@@ -87,24 +92,33 @@ model Credential {
   refreshTokenExp DateTime?
 }
 
-model Resource {
-  id            Int                     @id
-  applicationId Int
-  owner         Application             @relation(fields: [applicationId], references: [id])
-  userResource  ResourceAccessControl[]
+// Application Administrator Resource map
+model AdministratorResourceId {
+  id         Int      @id @default(autoincrement())
+  resourceId Int      @unique
+  resource   Resource @relation(fields: [resourceId], references: [id])
+
+  group Group?
+  user  User?
+  role  Role?
 }
 
-model ResourceAccessControl {
+model Resource {
+  id            Int                          @id
+  applicationId Int
+  owner         Application                  @relation(fields: [applicationId], references: [id])
+  userResource  UserResourceAccessControl[]
+  groupResource GroupResourceAccessControl[]
+  roleResource  RoleResourceAccessControl[]
+
+  AdministratorResourceId AdministratorResourceId?
+}
+
+model UserResourceAccessControl {
   id Int @id @default(autoincrement())
 
-  userId Int?
-  user   User? @relation(fields: [userId], references: [id])
-
-  groupId Int?
-  group   Group? @relation(fields: [groupId], references: [id])
-
-  roleId Int?
-  role   Role? @relation(fields: [roleId], references: [id])
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
 
   resourceId Int
   resource   Resource @relation(fields: [resourceId], references: [id])
@@ -112,6 +126,40 @@ model ResourceAccessControl {
   owner  Boolean @default(false)
   author Boolean @default(false)
   reader Boolean @default(false)
+
+  @@unique([userId, resourceId])
+}
+
+model GroupResourceAccessControl {
+  id Int @id @default(autoincrement())
+
+  groupId Int
+  group   Group @relation(fields: [groupId], references: [id])
+
+  resourceId Int
+  resource   Resource @relation(fields: [resourceId], references: [id])
+
+  owner  Boolean @default(false)
+  author Boolean @default(false)
+  reader Boolean @default(false)
+
+  @@unique([groupId, resourceId])
+}
+
+model RoleResourceAccessControl {
+  id Int @id @default(autoincrement())
+
+  roleId Int
+  role   Role @relation(fields: [roleId], references: [id])
+
+  resourceId Int
+  resource   Resource @relation(fields: [resourceId], references: [id])
+
+  owner  Boolean @default(false)
+  author Boolean @default(false)
+  reader Boolean @default(false)
+
+  @@unique([roleId, resourceId])
 }
 
 model Application {
@@ -129,12 +177,14 @@ model Role {
   application   Application               @relation(fields: [applicationId], references: [id])
   assignment    PrivilegeRoleAssignment[]
 
-  assignee     RoleInherit[]           @relation("assignee")
-  inherit      RoleInherit[]           @relation("inherit")
+  assignee     RoleInherit[]               @relation("assignee")
+  inherit      RoleInherit[]               @relation("inherit")
   user         RoleUserAssignment[]
   group        RoleGroupAssignment[]
-  roleResource ResourceAccessControl[]
+  roleResource RoleResourceAccessControl[]
 
+  resourceId Int?                     @unique
+  resource   AdministratorResourceId? @relation(fields: [resourceId], references: [id])
   @@unique([name, applicationId])
 }
 
