@@ -182,12 +182,26 @@ export const findAllResources = async (
       userResource: {
         select: accessControlSelector,
       },
+      groupResource: {
+        select: accessControlSelector,
+      },
+      roleResource: {
+        select: accessControlSelector,
+      },
     },
     ...queryInput('take', count),
     ...queryInput('orderBy', orderBy),
   });
 };
 
+/**
+ * @deprecated  use findAllResources
+ * @param userId
+ * @param startFromId
+ * @param count
+ * @param query
+ * @returns
+ */
 export const findAllResourcesByUser = (
   userId: number,
   startFromId?: number,
@@ -244,6 +258,12 @@ export const updateResources = (
     select: {
       id: true,
       userResource: {
+        select: accessControlSelector,
+      },
+      groupResource: {
+        select: accessControlSelector,
+      },
+      roleResource: {
         select: accessControlSelector,
       },
     },

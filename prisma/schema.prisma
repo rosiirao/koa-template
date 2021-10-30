@@ -82,6 +82,8 @@ model GroupAssignment {
   member  Group @relation(fields: [groupId], references: [id])
 
   @@id([userId, groupId])
+  @@index([userId])
+  @@index([groupId])
 }
 
 model Credential {
@@ -128,6 +130,7 @@ model UserResourceAccessControl {
   reader Boolean @default(false)
 
   @@unique([userId, resourceId])
+  @@index([userId])
 }
 
 model GroupResourceAccessControl {
@@ -144,6 +147,7 @@ model GroupResourceAccessControl {
   reader Boolean @default(false)
 
   @@unique([groupId, resourceId])
+  @@index([groupId])
 }
 
 model RoleResourceAccessControl {
@@ -160,6 +164,7 @@ model RoleResourceAccessControl {
   reader Boolean @default(false)
 
   @@unique([roleId, resourceId])
+  @@index([roleId])
 }
 
 model Application {
@@ -167,6 +172,10 @@ model Application {
   name     String     @koaTemplate.VarChar(32)
   resource Resource[]
   role     Role[]
+
+  PrivilegeUserAssignment  PrivilegeUserAssignment[]
+  PrivilegeGroupAssignment PrivilegeGroupAssignment[]
+  PrivilegeRoleAssignment  PrivilegeRoleAssignment[]
 }
 
 // The role only works with application, and have unique name in every application.
@@ -192,27 +201,42 @@ model PrivilegeRoleAssignment {
   roleId Int
   role   Role @relation(fields: [roleId], references: [id])
 
+  applicationId Int
+  application   Application @relation(fields: [applicationId], references: [id])
+
   privilege Privilege
 
-  @@id([roleId, privilege])
+  @@id([roleId, privilege, applicationId])
+  @@index([roleId])
+  @@index([roleId, applicationId])
 }
 
 model PrivilegeUserAssignment {
   userId Int
   user   User @relation(fields: [userId], references: [id])
 
+  applicationId Int
+  application   Application @relation(fields: [applicationId], references: [id])
+
   privilege Privilege
 
-  @@id([userId, privilege])
+  @@id([userId, privilege, applicationId])
+  @@index([userId])
+  @@index([userId, applicationId])
 }
 
 model PrivilegeGroupAssignment {
   groupId Int
   group   Group @relation(fields: [groupId], references: [id])
 
+  applicationId Int
+  application   Application @relation(fields: [applicationId], references: [id])
+
   privilege Privilege
 
-  @@id([groupId, privilege])
+  @@id([groupId, privilege, applicationId])
+  @@index([groupId])
+  @@index([groupId, applicationId])
 }
 
 model RoleInherit {
@@ -233,6 +257,7 @@ model RoleUserAssignment {
   role   Role @relation(fields: [roleId], references: [id])
 
   @@id([userId, roleId])
+  @@index([userId])
 }
 
 model RoleGroupAssignment {
@@ -243,6 +268,7 @@ model RoleGroupAssignment {
   role   Role @relation(fields: [roleId], references: [id])
 
   @@id([groupId, roleId])
+  @@index([groupId])
 }
 
 enum Privilege {
