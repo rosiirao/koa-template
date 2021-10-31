@@ -1,9 +1,7 @@
 import prisma from './client';
-import { Prisma, Application } from '.prisma/client';
+import { Prisma } from '.prisma/client';
 import { queryInput, orderByInput } from './query.shared';
 import { OrderByQuery } from './query.shared';
-
-import { LENGTH_MAX_NAME } from './query.shared';
 
 type ResourceAccessControl = Partial<Record<'authors' | 'readers', number[]>>;
 type AccessControlFields = {
@@ -46,34 +44,6 @@ const mapAccessControlToRecord = (
     },
     []
   );
-};
-
-export const createApplication = async (
-  name: string
-): Promise<{
-  id: number;
-  name: string;
-}> => {
-  if (name.length > LENGTH_MAX_NAME) {
-    throw new Error(
-      `The length of the role name can\t exceed ${LENGTH_MAX_NAME}, got name ${name}`
-    );
-  }
-  return prisma.application.create({
-    data: { name },
-  });
-};
-
-export const findApplication = async (option: {
-  name?: string;
-  id?: number;
-}): Promise<Application[]> => {
-  if (option.id === undefined && option.name === undefined) {
-    throw new Error('Query application need id or name');
-  }
-  return prisma.application.findMany({
-    where: option,
-  });
 };
 
 export const createResource = async (

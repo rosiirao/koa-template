@@ -4,7 +4,7 @@ import Koa from 'koa';
  *
  * @returns The application current context want to access
  */
-function getApplication(context: Koa.Context) {
+function getApplication(_context: Koa.Context) {
   return 1;
 }
 

@@ -44,7 +44,7 @@ model User {
   privilege PrivilegeUserAssignment[]
 
   resourceId Int?                     @unique
-  Resource   AdministratorResourceId? @relation(fields: [resourceId], references: [id])
+  Resource   RootResourceMap? @relation(fields: [resourceId], references: [id])
 }
 
 model Group {
@@ -61,7 +61,7 @@ model Group {
   groupResource GroupResourceAccessControl[]
 
   resourceId Int?                     @unique
-  Resource   AdministratorResourceId? @relation(fields: [resourceId], references: [id])
+  Resource   RootResourceMap? @relation(fields: [resourceId], references: [id])
 }
 
 model GroupInherit {
@@ -94,8 +94,8 @@ model Credential {
   refreshTokenExp DateTime?
 }
 
-// Application Administrator Resource map
-model AdministratorResourceId {
+// Map all Application *Root* resources to Resource 
+model RootResourceMap {
   id         Int      @id @default(autoincrement())
   resourceId Int      @unique
   resource   Resource @relation(fields: [resourceId], references: [id])
@@ -113,7 +113,7 @@ model Resource {
   groupResource GroupResourceAccessControl[]
   roleResource  RoleResourceAccessControl[]
 
-  AdministratorResourceId AdministratorResourceId?
+  RootResourceMap RootResourceMap?
 }
 
 model UserResourceAccessControl {
@@ -193,7 +193,7 @@ model Role {
   roleResource RoleResourceAccessControl[]
 
   resourceId Int?                     @unique
-  resource   AdministratorResourceId? @relation(fields: [resourceId], references: [id])
+  resource   RootResourceMap? @relation(fields: [resourceId], references: [id])
   @@unique([name, applicationId])
 }
 

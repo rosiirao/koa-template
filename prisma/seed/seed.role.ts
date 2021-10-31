@@ -12,19 +12,19 @@ import { randomName } from './seed.shared';
 import { debounceAsyncExecutor, nextId } from '../../src/utils';
 
 /**
- * Seed role for APP *Administrator*
+ * Seed role for APP *Root*
  */
-const APP_NAME = 'Administrator';
+const APP_NAME = 'Root';
 
 /**
- * Seed the administrator application
+ * Seed the *Root* application
  */
-const seedAdministrator = () => {
+const seedRootApp = () => {
   return createApplication(APP_NAME);
 };
 
 export const getApplication = async (): Promise<Application> =>
-  (await findApplication({ name: APP_NAME }))[0] ?? (await seedAdministrator());
+  (await findApplication({ name: APP_NAME }))[0] ?? (await seedRootApp());
 
 export const seedRole = async (): Promise<Prisma.BatchPayload> => {
   const role = roleHierarchyList(50);

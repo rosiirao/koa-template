@@ -1,7 +1,7 @@
 import Router from '@koa/router';
 import createHttpError from 'http-errors';
 import compose from 'koa-compose';
-import { listUser, findUnique } from '../query/user.query';
+import { listUser, findUnique } from '../../query/user.query';
 
 const router = new Router({
   prefix: '/user',
