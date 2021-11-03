@@ -10,4 +10,7 @@ module.exports = {
   testPathIgnorePatterns: ['/lib/', '/dist/', '/public/', '/node_modules/'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   collectCoverage: true,
+  moduleNameMapper: {
+    '^jose/(.*)$': '<rootDir>/node_modules/jose/dist/node/cjs/$1',
+  },
 };

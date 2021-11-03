@@ -2,15 +2,19 @@ import config from 'config';
 import startCluster from './cluster';
 import cluster from 'cluster';
 
-const appConf: {
-  NAME: string;
-} = config.has('application') && config.get('application');
+const appConf:
+  | {
+      NAME: string;
+    }
+  | undefined = config.has('application')
+  ? config.get('application')
+  : undefined;
 const appName = appConf?.NAME ?? 'koaApplication';
 process.title = cluster.isPrimary ? appName : `${appName}-ser`;
 
 const clusterConf: {
   APP_WORKER_COUNT: number;
-} = (config.has('cluster') && config.get('cluster')) ?? {
+} = (config.has('cluster') ? config.get('cluster') : undefined) ?? {
   APP_WORKER_COUNT: 2,
 };
 

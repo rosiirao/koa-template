@@ -1,5 +1,6 @@
 export interface IUserState {
-  currentUser: {
-    id: string;
-  };
+  user: Partial<{
+    name: string;
+    id: number;
+  }>;
 }

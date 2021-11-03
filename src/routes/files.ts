@@ -12,12 +12,13 @@ type Conf = {
 
 const defaultPath = 'files';
 
-const conf: Conf = config.has('services.files')
+const conf: Conf | undefined = config.has('services.files')
   ? config.get('services.files')
   : undefined;
 
-const filesService = (conf: Conf) => {
+const filesService = (conf?: Conf) => {
   // if ((conf?.root ?? '') === '') return;
+  if (conf === undefined) return;
 
   const publicPath = conf.path ?? defaultPath;
   const router = new Router({
@@ -25,7 +26,7 @@ const filesService = (conf: Conf) => {
       publicPath && `${publicPath.startsWith('/') ? '' : '/'}${publicPath}`,
   });
 
-  const filesServe = (path: string) => files(path, conf.root);
+  const filesServe = (path: string) => files(path, conf.root ?? '');
   router.get('/:path+', async (ctx, next) => {
     await filesServe('/' + ctx.params.path)(ctx, next);
   });

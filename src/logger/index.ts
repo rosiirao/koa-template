@@ -1,6 +1,6 @@
 // import { getLogger, createLogger, addListener } from './winston.impl';
 import Koa from 'koa';
-import logConf from './config';
+import logConf from './config.logger';
 import { getLogger } from './winston.impl';
 
 const accessLog = logConf?.ACCESS_LOG;
@@ -13,6 +13,7 @@ const appLogger = (app: Koa): Koa.Middleware => {
       status !== 429 &&
       !/invalid_header/i.test(err.message || String(err))
     ) {
+      ctx.expose = true;
       return;
     }
     /* centralized error handling:
@@ -27,7 +28,7 @@ const appLogger = (app: Koa): Koa.Middleware => {
     });
   });
 
-  return async (ctx: Koa.Context, next: Koa.Next): Promise<void> => {
+  return async (ctx, next): Promise<void> => {
     let time;
     if (accessLog) {
       time = process.hrtime();

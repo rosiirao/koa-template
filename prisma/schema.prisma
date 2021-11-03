@@ -1,0 +1,280 @@
+datasource koaTemplate {
+  provider          = "mysql"
+  url               = env("MARIA_DB")
+  shadowDatabaseUrl = env("MARIA_DB_SHADOW")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  title     String   @koaTemplate.VarChar(255)
+  content   String?
+  published Boolean  @default(false)
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  Int
+}
+
+model Profile {
+  id     Int     @id @default(autoincrement())
+  bio    String?
+  user   User    @relation(fields: [userId], references: [id])
+  userId Int     @unique
+}
+
+model User {
+  id    Int     @id @default(autoincrement())
+  email String  @unique
+  name  String  @unique
+  alias String?
+
+  createdAt  DateTime    @default(now())
+  posts      Post[]
+  profile    Profile?
+  credential Credential?
+
+  userResource UserResourceAccessControl[]
+
+  group     GroupAssignment[]
+  role      RoleUserAssignment[]
+  privilege PrivilegeUserAssignment[]
+
+  resourceId Int?                     @unique
+  Resource   RootResourceMap? @relation(fields: [resourceId], references: [id])
+}
+
+model Group {
+  id        Int      @id @default(autoincrement())
+  name      String   @koaTemplate.VarChar(32)
+  createdAt DateTime @default(now())
+
+  member GroupInherit[] @relation("member")
+  unit   GroupInherit[] @relation("unit")
+
+  user          GroupAssignment[]
+  role          RoleGroupAssignment[]
+  privilege     PrivilegeGroupAssignment[]
+  groupResource GroupResourceAccessControl[]
+
+  resourceId Int?                     @unique
+  Resource   RootResourceMap? @relation(fields: [resourceId], references: [id])
+}
+
+model GroupInherit {
+  memberId Int
+  member   Group @relation("member", fields: [memberId], references: [id])
+
+  unitId Int
+  unit   Group @relation("unit", fields: [unitId], references: [id])
+  @@id([memberId, unitId])
+}
+
+model GroupAssignment {
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  groupId Int
+  member  Group @relation(fields: [groupId], references: [id])
+
+  @@id([userId, groupId])
+  @@index([userId])
+  @@index([groupId])
+}
+
+model Credential {
+  userId          Int       @id
+  user            User      @relation(fields: [userId], references: [id])
+  password        String    @koaTemplate.Char(60)
+  refreshToken    String?   @unique @koaTemplate.Char(60)
+  refreshTokenExp DateTime?
+}
+
+// Map all Application *Root* resources to Resource 
+model RootResourceMap {
+  id         Int      @id @default(autoincrement())
+  resourceId Int      @unique
+  resource   Resource @relation(fields: [resourceId], references: [id])
+
+  group Group?
+  user  User?
+  role  Role?
+}
+
+model Resource {
+  id            Int                          @id
+  applicationId Int
+  owner         Application                  @relation(fields: [applicationId], references: [id])
+  userResource  UserResourceAccessControl[]
+  groupResource GroupResourceAccessControl[]
+  roleResource  RoleResourceAccessControl[]
+
+  RootResourceMap RootResourceMap?
+}
+
+model UserResourceAccessControl {
+  id Int @id @default(autoincrement())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  resourceId Int
+  resource   Resource @relation(fields: [resourceId], references: [id])
+
+  owner  Boolean @default(false)
+  author Boolean @default(false)
+  reader Boolean @default(false)
+
+  @@unique([userId, resourceId])
+  @@index([userId])
+}
+
+model GroupResourceAccessControl {
+  id Int @id @default(autoincrement())
+
+  groupId Int
+  group   Group @relation(fields: [groupId], references: [id])
+
+  resourceId Int
+  resource   Resource @relation(fields: [resourceId], references: [id])
+
+  owner  Boolean @default(false)
+  author Boolean @default(false)
+  reader Boolean @default(false)
+
+  @@unique([groupId, resourceId])
+  @@index([groupId])
+}
+
+model RoleResourceAccessControl {
+  id Int @id @default(autoincrement())
+
+  roleId Int
+  role   Role @relation(fields: [roleId], references: [id])
+
+  resourceId Int
+  resource   Resource @relation(fields: [resourceId], references: [id])
+
+  owner  Boolean @default(false)
+  author Boolean @default(false)
+  reader Boolean @default(false)
+
+  @@unique([roleId, resourceId])
+  @@index([roleId])
+}
+
+model Application {
+  id       Int        @id @default(autoincrement())
+  name     String     @koaTemplate.VarChar(32)
+  resource Resource[]
+  role     Role[]
+
+  PrivilegeUserAssignment  PrivilegeUserAssignment[]
+  PrivilegeGroupAssignment PrivilegeGroupAssignment[]
+  PrivilegeRoleAssignment  PrivilegeRoleAssignment[]
+}
+
+// The role only works with application, and have unique name in every application.
+model Role {
+  id            Int                       @id @default(autoincrement())
+  name          String                    @koaTemplate.VarChar(32)
+  applicationId Int
+  application   Application               @relation(fields: [applicationId], references: [id])
+  assignment    PrivilegeRoleAssignment[]
+
+  assignee     RoleInherit[]               @relation("assignee")
+  inherit      RoleInherit[]               @relation("inherit")
+  user         RoleUserAssignment[]
+  group        RoleGroupAssignment[]
+  roleResource RoleResourceAccessControl[]
+
+  resourceId Int?                     @unique
+  resource   RootResourceMap? @relation(fields: [resourceId], references: [id])
+  @@unique([name, applicationId])
+}
+
+model PrivilegeRoleAssignment {
+  roleId Int
+  role   Role @relation(fields: [roleId], references: [id])
+
+  applicationId Int
+  application   Application @relation(fields: [applicationId], references: [id])
+
+  privilege Privilege
+
+  @@id([roleId, privilege, applicationId])
+  @@index([roleId])
+  @@index([roleId, applicationId])
+}
+
+model PrivilegeUserAssignment {
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  applicationId Int
+  application   Application @relation(fields: [applicationId], references: [id])
+
+  privilege Privilege
+
+  @@id([userId, privilege, applicationId])
+  @@index([userId])
+  @@index([userId, applicationId])
+}
+
+model PrivilegeGroupAssignment {
+  groupId Int
+  group   Group @relation(fields: [groupId], references: [id])
+
+  applicationId Int
+  application   Application @relation(fields: [applicationId], references: [id])
+
+  privilege Privilege
+
+  @@id([groupId, privilege, applicationId])
+  @@index([groupId])
+  @@index([groupId, applicationId])
+}
+
+model RoleInherit {
+  roleId Int
+  role   Role @relation("assignee", fields: [roleId], references: [id])
+
+  inheritId Int
+  inherit   Role @relation("inherit", fields: [inheritId], references: [id])
+
+  @@id([roleId, inheritId])
+}
+
+model RoleUserAssignment {
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  roleId Int
+  role   Role @relation(fields: [roleId], references: [id])
+
+  @@id([userId, roleId])
+  @@index([userId])
+}
+
+model RoleGroupAssignment {
+  groupId Int
+  group   Group @relation(fields: [groupId], references: [id])
+
+  roleId Int
+  role   Role @relation(fields: [roleId], references: [id])
+
+  @@id([groupId, roleId])
+  @@index([groupId])
+}
+
+enum Privilege {
+  NONE
+  READ_RESOURCE
+  CREATE_RESOURCE
+  MODIFY_RESOURCE
+  DELETE_RESOURCE
+}

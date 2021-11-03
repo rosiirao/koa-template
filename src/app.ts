@@ -8,7 +8,12 @@ import { IUserState } from './app.d';
 // import send from 'koa-send';
 
 const startApp = (): Koa => {
-  const app = new Koa<unknown, IUserState>();
+  const app = new Koa<IUserState>();
+  app.use(async (ctx, next) => {
+    await next().catch((err) => {
+      ctx.throw(err.statusCode || err.status || 500, err);
+    });
+  });
   app.use(logger(app));
 
   /**
