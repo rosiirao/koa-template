@@ -1,0 +1,41 @@
+- complete the db push with the data preserve
+  [x] The applicationId of privilege assignment default set with *1*
+- API
+  - Application
+    [ ] List applications
+    [ ] Add application
+    [ ] Remove application
+    [ ] Modify application
+    - role
+      [ ] List roles of application
+      [ ] Add role
+      [ ] Remove role
+      [ ] Modify role
+      [ ] Assign role on role
+      [ ] Revoke role on role
+      [ ] Assign role on role
+      [ ] Revoke role on role
+      [ ] Assign role on role
+      [ ] Revoke role on role
+    - privilege
+      [ ] Grant on Role 
+      [ ] Revoke on Role 
+      [ ] Grant on Group 
+      [ ] Revoke on Group 
+      [ ] Grant on User 
+      [ ] Revoke on User 
+  - Group
+  - User
+  - Resource
+    [ ] Add resource and get the resource id
+    [ ] Remove resource
+    [ ] Modify resource access control list
+    [ ] Query resource with access control enabled
+- Blog Application
+  - [ ] Post 
+    - [ ] Author, Reader
+    - [ ] List
+- initial the administrator role
+  [ ] Add *administrator* role On Application *Root*
+  [ ] Modify the privileges of *administrator* role 
+  [ ] Add Application *Test* with the role *administrator*
