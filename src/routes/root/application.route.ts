@@ -1,7 +1,10 @@
 import Router from '@koa/router';
 import createHttpError from 'http-errors';
 import compose from 'koa-compose';
-import { listApplication, findUnique } from '../../query/application.query';
+import {
+  listApplication,
+  findUnique,
+} from '../../query/application/application.query';
 
 const router = new Router({
   prefix: '/application',

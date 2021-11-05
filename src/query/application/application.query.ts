@@ -1,5 +1,5 @@
-import prisma from './client';
-import { LENGTH_MAX_NAME } from './query.shared';
+import prisma from '../client';
+import { LENGTH_MAX_NAME } from '../query.shared';
 
 import { Application, PrismaPromise } from '.prisma/client';
 
@@ -19,6 +19,10 @@ export const createApplication = (
   });
 };
 
+/**
+ * List application without privilege filter
+ * The role assignment is attached to application, so we need all applications first, and then we can filter with role
+ */
 export const listApplication = (option?: {
   name?: string;
   id?: number;

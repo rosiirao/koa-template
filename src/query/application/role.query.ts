@@ -1,7 +1,7 @@
 import { Prisma, PrismaPromise, Role } from '@prisma/client';
-import prisma from './client';
-import { enumerableFlat } from './group.query';
-import { DEFAULT_ROW_COUNT, queryInput, verifyName } from './query.shared';
+import prisma from '../client';
+import { enumerableFlat } from '../group.query';
+import { DEFAULT_ROW_COUNT, queryInput, verifyName } from '../query.shared';
 
 export const create = async (
   name: string,

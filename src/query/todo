@@ -1,5 +1,4 @@
-1. test find all resources by user.
-2. test find all resources by user.
-3. load testing
-4. Database healthy check periodically
-5. test if number of connections is decided by mariadb configuration
+[ ] test find all resources by user.
+[ ] load testing
+[ ] Database healthy check periodically
+[ ] test if number of connections is decided by mariadb configuration
