@@ -1,7 +1,7 @@
 import api from './api';
 import auth from './auth.route';
 import files from './files';
-import { user } from './root';
+import { user } from './names';
 import test from './test.router';
 
 import Koa from 'koa';
