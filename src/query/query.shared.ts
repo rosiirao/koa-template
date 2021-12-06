@@ -30,14 +30,14 @@ export function resultExecute<T>(value: ResultExecution<T>): T {
  * So we can simply deconstruct it as the query parameter.
  * @example `queryInput('take', count)  // count is optional`
  */
-export function queryInput<T>(
-  key: string,
+export function queryInput<K extends string, T>(
+  key: K,
   value?: T,
   validator?: ResultExecution<boolean>
-): undefined | { [key: string]: T } {
+): undefined | Record<K, T> {
   return value === undefined || !(resultExecute(validator) ?? true)
     ? undefined
-    : { [key]: value };
+    : ({ [key]: value } as Record<K, T>);
 }
 
 type PickMatchingProperties<T, V> = Pick<
@@ -100,4 +100,35 @@ export function verifyName(name: string): true | never {
     );
   }
   return true;
+}
+
+export const itemOfEnumerable = <T>(
+  enumerable = [] as Prisma.Enumerable<T>,
+  index = 0
+): T | undefined =>
+  Array.isArray(enumerable) ? (enumerable as T[]).at(index) : enumerable;
+
+export const enumerableIsEmpty = <T>(
+  enumerable = [] as Prisma.Enumerable<T>
+): boolean =>
+  Array.isArray(enumerable)
+    ? enumerable.length === 0
+    : enumerable === undefined;
+
+export const enumerableFlat = <T>(
+  enumerable = [] as Prisma.Enumerable<T>
+): T[] => (Array.isArray(enumerable) ? enumerable : [enumerable]);
+
+export function listQueryCriteria<T extends OrderByInput>(
+  count: number,
+  skip = 0,
+  start = 1,
+  orderBy?: Prisma.Enumerable<T>
+) {
+  return {
+    take: count,
+    ...queryInput('skip', skip, skip > 1),
+    ...queryInput('cursor', { id: start }, start > 1),
+    ...queryInput('orderBy', orderBy),
+  };
 }

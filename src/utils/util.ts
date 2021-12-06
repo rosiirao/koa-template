@@ -39,7 +39,7 @@ export const sliceMap = <T, R = Array<T>>(
 };
 
 /**
- * generate a list in start..range
+ * Generate a list in start..range
  * @return the summary of result
  */
 export const rangeList = <R>(

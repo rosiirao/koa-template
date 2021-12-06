@@ -2,12 +2,12 @@ import { Application, Prisma } from '@prisma/client';
 import {
   createMany as createRole,
   inheritTo,
-} from '../../src/query/role.query';
+} from '../../src/query/application/role.query';
 import {
   createApplication,
-  createResource,
-  findApplication,
-} from '../../src/query/resource.query';
+  findUnique as findApplication,
+} from '../../src/query/application/application.query';
+import { createResource } from '../../src/query/resource.query';
 import { randomName } from './seed.shared';
 import { debounceAsyncExecutor, nextId } from '../../src/utils';
 
@@ -24,7 +24,7 @@ const seedRootApp = () => {
 };
 
 export const getApplication = async (): Promise<Application> =>
-  (await findApplication({ name: APP_NAME }))[0] ?? (await seedRootApp());
+  (await findApplication({ name: APP_NAME })) ?? (await seedRootApp());
 
 export const seedRole = async (): Promise<Prisma.BatchPayload> => {
   const role = roleHierarchyList(50);

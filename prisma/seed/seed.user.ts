@@ -4,14 +4,14 @@ import { debounceAsyncExecutor, rangeList } from '../../src/utils';
 import {
   create as createUser,
   createMany as createManyUser,
-  listUser,
+  listUsers,
   findUnique,
 } from '../../src/query/user.query';
 
 import { appendUser, listRoot, findMember } from '../../src/query/group.query';
 
 import { Prisma, User } from '.prisma/client';
-import { randomName, getRandomArbitrary } from './seed.shared';
+import { randomName, getRandomArbitrary, aclCriteria } from './seed.shared';
 
 const saltRounds = 8;
 // const myPlaintextPassword = 's0//P4$$w0rD';
@@ -66,7 +66,7 @@ export async function userList(
   /**
    * the records in db
    */
-  const backend = (await listUser()).reduce<
+  const backend = (await listUsers(aclCriteria)).reduce<
     [email: Set<string>, name: Set<string>]
   >(
     ([m, n], { email, name }) => (m.add(email), n.add(name), [m, n]),
@@ -119,7 +119,7 @@ export async function seedUserGroup(): Promise<void> {
   // find the last user, get the greatest number.
   const { id: maxUserId } =
     (
-      await listUser(1, undefined, {
+      await listUsers(aclCriteria, 1, undefined, {
         orderBy: 'id',
         desc: true,
       })
@@ -127,7 +127,7 @@ export async function seedUserGroup(): Promise<void> {
   if (maxUserId === undefined) {
     throw new Error('No user exists, make sure seed users first');
   }
-  const user = (await listUser(maxUserId)).map(({ id }) => id);
+  const user = (await listUsers(aclCriteria, maxUserId)).map(({ id }) => id);
 
   // test and get all root;
   const rootNumber = 1_000;

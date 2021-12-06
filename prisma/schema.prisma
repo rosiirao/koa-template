@@ -43,8 +43,8 @@ model User {
   role      RoleUserAssignment[]
   privilege PrivilegeUserAssignment[]
 
-  resourceId Int?                     @unique
-  Resource   NamesResourceMap? @relation(fields: [resourceId], references: [id])
+  resourceId Int              @unique
+  Resource   NamesResource @relation(fields: [resourceId], references: [id])
 }
 
 model Group {
@@ -60,8 +60,8 @@ model Group {
   privilege     PrivilegeGroupAssignment[]
   groupResource GroupResourceAccessControl[]
 
-  resourceId Int?                     @unique
-  Resource   NamesResourceMap? @relation(fields: [resourceId], references: [id])
+  resourceId Int              @unique
+  Resource   NamesResource @relation(fields: [resourceId], references: [id])
 }
 
 model GroupInherit {
@@ -94,11 +94,11 @@ model Credential {
   refreshTokenExp DateTime?
 }
 
-// Map all resources of Application *Names*  to Resource 
-model NamesResourceMap {
-  id         Int      @id @default(autoincrement())
-  resourceId Int      @unique
-  resource   Resource @relation(fields: [resourceId], references: [id])
+// Map all resources of Application *Names* to Resource
+model NamesResource {
+  id            Int       @id @default(autoincrement())
+  resourceId    Int?      @unique
+  UnityResource Resource? @relation(fields: [resourceId], references: [id])
 
   group Group?
   user  User?
@@ -109,11 +109,13 @@ model Resource {
   id            Int                          @id
   applicationId Int
   owner         Application                  @relation(fields: [applicationId], references: [id])
-  userResource  UserResourceAccessControl[]
-  groupResource GroupResourceAccessControl[]
-  roleResource  RoleResourceAccessControl[]
+  UserACL       UserResourceAccessControl[]
+  GroupACL      GroupResourceAccessControl[]
+  RoleACL       RoleResourceAccessControl[]
 
-  NamesResourceMap NamesResourceMap?
+
+  NamesResource NamesResource?
+  @@unique([id, applicationId])
 }
 
 model UserResourceAccessControl {
@@ -192,8 +194,8 @@ model Role {
   group        RoleGroupAssignment[]
   roleResource RoleResourceAccessControl[]
 
-  resourceId Int?                     @unique
-  resource   NamesResourceMap? @relation(fields: [resourceId], references: [id])
+  resourceId Int              @unique
+  Resource   NamesResource @relation(fields: [resourceId], references: [id])
   @@unique([name, applicationId])
 }
 

@@ -8,12 +8,14 @@ import {
   verifyAuthToken,
 } from '../controllers/auth.controller';
 import { cors } from '../controllers/cors';
+
+import { authorizeParamRoute } from './application.route';
+
 import body from 'koa-body';
-
-import { IUserState } from '../app';
 import compose from 'koa-compose';
+import createHttpError from 'http-errors';
 
-const router = new Router<IUserState>({
+const router = new Router({
   prefix: '/auth',
 });
 
@@ -32,6 +34,29 @@ router
   })
   .get('/who', verifyAuthToken, async function (ctx) {
     ctx.body = ctx.state.user.name;
+  });
+
+authorizeParamRoute(router, {
+  applicationName: 'applicationName',
+  resourceId: 'resourceId',
+})
+  .get('/:applicationName', (ctx) => {
+    const applicationId = ctx.state.subject?.applicationId;
+    if (applicationId === undefined)
+      throw createHttpError(
+        500,
+        'The application state is not load before used, use authorizeRoute or authorizeParamRoute first'
+      );
+    ctx.body = ctx.state.privilege;
+  })
+  .get('/:applicationName/:resourceId?', (ctx) => {
+    const { applicationId, resourceId } = ctx.state.subject ?? {};
+    if (applicationId === undefined || resourceId === undefined)
+      throw createHttpError(
+        500,
+        'The resource state is not load before used, use authorizeRoute or authorizeParamRoute first'
+      );
+    ctx.body = ctx.state.privilege?.resource;
   });
 
 export default compose([cors, router.routes(), router.allowedMethods()]);

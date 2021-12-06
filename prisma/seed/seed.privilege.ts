@@ -1,7 +1,7 @@
 import { Prisma, Privilege } from '@prisma/client';
-import { listRole } from '../../src/query/role.query';
-import { listUser } from '../../src/query/user.query';
-import { assignPrivilege } from '../../src/query/privilege.query';
+import { listRoles } from '../../src/query/application/role.query';
+import { listUsers } from '../../src/query/user.query';
+import { assignPrivilege } from '../../src/query/application/privilege.query';
 import {
   AsyncExecutor,
   debounceAsyncExecutor,
@@ -10,7 +10,7 @@ import {
 } from '../../src/utils';
 import { getApplication } from './seed.role';
 import { findMember, listRoot } from '../../src/query/group.query';
-import { randomPick } from './seed.shared';
+import { aclCriteria, randomPick } from './seed.shared';
 
 const priv = [
   Privilege.CREATE_RESOURCE,
@@ -25,10 +25,10 @@ const priv = [
 const listAllRole = async () => {
   const { id: applicationId } = await getApplication();
   const accCount = 1_00;
-  let role = [] as ThenArg<typeof listRole>,
+  let role = [] as ThenArg<typeof listRoles>,
     nextRole: typeof role;
   while (
-    (nextRole = await listRole(applicationId, accCount, {
+    (nextRole = await listRoles(applicationId, accCount, {
       start: (role.at(-1)?.id ?? 0) + 1,
     })).length > 0
   ) {
@@ -51,10 +51,11 @@ const listAllGroupRoot = async () => {
 
 const listAllUser = async () => {
   const fetchCount = 50;
-  let user = [] as ThenArg<typeof listUser>,
+  let user = [] as ThenArg<typeof listUsers>,
     nextUser: typeof user;
   while (
-    (nextUser = await listUser(fetchCount, { skip: user.length })).length > 0
+    (nextUser = await listUsers(aclCriteria, fetchCount, { skip: user.length }))
+      .length > 0
   ) {
     user = user.concat(nextUser);
   }

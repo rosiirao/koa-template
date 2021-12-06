@@ -41,3 +41,8 @@ export { randomCharacter as randomName };
 //     return '';
 //   }
 // }
+
+export const aclCriteria = {
+  applicationId: 1,
+  identities: { id: 1, role: [], group: [] },
+};

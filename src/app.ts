@@ -5,8 +5,6 @@ import logger from './logger';
 
 import { IUserState } from './app.d';
 
-// import send from 'koa-send';
-
 const startApp = (): Koa => {
   const app = new Koa<IUserState>();
   app.use(async (ctx, next) => {
@@ -28,12 +26,15 @@ const startApp = (): Koa => {
     await next();
   });
 
-  // app.use(async (ctx, _) => {
-  //   await send(ctx, ctx.path, { root: __dirname + '/public' });
-  // });
   app.use(routes);
   return app;
 };
 
 export default startApp;
-export { IUserState };
+export {
+  IIdentityState,
+  IPrivilege,
+  ISubject,
+  IUserState,
+  AuthorizedState,
+} from './app.d';

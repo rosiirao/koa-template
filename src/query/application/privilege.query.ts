@@ -1,7 +1,7 @@
 import { Privilege } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import prisma from '../client';
-import { enumerableFlat } from '../group.query';
+import { enumerableFlat } from '../query.shared';
 
 export { Privilege } from '@prisma/client';
 
@@ -67,4 +67,16 @@ export async function assignPrivilege(
     (acc_1, { count }) => ({ count: count + acc_1.count }),
     { count: 0 }
   );
+}
+
+export async function listPrivilegeAssignments(applicationId: number) {
+  const found = await prisma.application.findUnique({
+    where: { id: applicationId },
+    select: {
+      PrivilegeGroupAssignment: { select: { groupId: true, privilege: true } },
+      PrivilegeUserAssignment: { select: { userId: true, privilege: true } },
+      PrivilegeRoleAssignment: { select: { roleId: true, privilege: true } },
+    },
+  });
+  return found;
 }

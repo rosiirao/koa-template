@@ -195,7 +195,7 @@ export const refreshToken: Router.Middleware<IUserState> = async (ctx) => {
   const token = ctx.cookies.get('refresh_token');
   if (token === undefined) throw createHttpError(401);
   const credential = await findCredential({ refreshToken: token });
-  if (credential?.refreshTokenExp ?? undefined === undefined)
+  if ((credential?.refreshTokenExp ?? undefined) === undefined)
     throw createHttpError(401);
   if (credential!.refreshTokenExp! < new Date()) {
     ctx.throw(401, 'Expired token');

@@ -14,11 +14,30 @@ type ResourceAccessControlRecord = AccessControlFields & {
   resourceId: number;
 };
 
-const accessControlSelector = {
-  author: true,
-  reader: true,
-  userId: true,
-};
+const accessControlSelector = <T extends object>(mixed: T) =>
+  ({
+    author: true,
+    reader: true,
+    owner: true,
+    ...mixed,
+  } as const);
+
+const userACLSelector = accessControlSelector({ userId: true } as const);
+const groupACLSelector = accessControlSelector({ groupId: true } as const);
+const roleACLSelector = accessControlSelector({ roleId: true } as const);
+
+export const resourceACLSelector = {
+  id: true,
+  UserACL: {
+    select: userACLSelector,
+  },
+  GroupACL: {
+    select: groupACLSelector,
+  },
+  RoleACL: {
+    select: roleACLSelector,
+  },
+} as const;
 
 const mapAccessControlToRecord = (
   data: ResourceAccessControl
@@ -53,14 +72,14 @@ export const createResource = async (
 ): Promise<{
   id: number;
   applicationId: number;
-  userResource: AccessControlFields[];
+  UserACL: AccessControlFields[];
 }> => {
   const userResourceData = mapAccessControlToRecord(data);
   return prisma.resource.create({
     data: {
       id,
       applicationId,
-      userResource: {
+      UserACL: {
         createMany: {
           skipDuplicates: true,
           data: userResourceData,
@@ -70,26 +89,19 @@ export const createResource = async (
     select: {
       id: true,
       applicationId: true,
-      userResource: {
-        select: accessControlSelector,
+      UserACL: {
+        select: userACLSelector,
       },
     },
   });
 };
 
-export const findResource = async (
-  id: number
-): Promise<{ id: number; userResource: AccessControlFields[] } | null> => {
+export const findResource = async (id: number) => {
   return prisma.resource.findUnique({
     where: {
       id,
     },
-    select: {
-      id: true,
-      userResource: {
-        select: accessControlSelector,
-      },
-    },
+    select: resourceACLSelector,
   });
 };
 
@@ -98,7 +110,7 @@ export const findAllResources = async (
   user?: { id: number; role: number[]; group: number[] },
   count?: number,
   query?: OrderByQuery<Prisma.ResourceOrderByWithAggregationInput>
-): Promise<{ id: number; userResource: AccessControlFields[] }[]> => {
+): Promise<{ id: number; UserACL: AccessControlFields[] }[]> => {
   const orderBy = orderByInput<Prisma.ResourceOrderByWithAggregationInput>(
     query,
     'id'
@@ -110,7 +122,7 @@ export const findAllResources = async (
     user === undefined
       ? undefined
       : {
-          userResource: {
+          UserACL: {
             every: {
               userId: user.id,
             },
@@ -120,7 +132,7 @@ export const findAllResources = async (
     user === undefined
       ? undefined
       : {
-          groupResource: {
+          GroupACL: {
             every: {
               groupId: {
                 in: user.group,
@@ -132,7 +144,7 @@ export const findAllResources = async (
     user === undefined
       ? undefined
       : {
-          roleResource: {
+          RoleACL: {
             every: {
               roleId: {
                 in: user.role,
@@ -147,18 +159,7 @@ export const findAllResources = async (
       ...queryByGroup,
       ...queryByRole,
     },
-    select: {
-      id: true,
-      userResource: {
-        select: accessControlSelector,
-      },
-      groupResource: {
-        select: accessControlSelector,
-      },
-      roleResource: {
-        select: accessControlSelector,
-      },
-    },
+    select: resourceACLSelector,
     ...queryInput('take', count),
     ...queryInput('orderBy', orderBy),
   });
@@ -207,7 +208,7 @@ export const updateResources = (
   data: Partial<Record<'authors' | 'readers', number[]>>
 ): Promise<{
   id: number;
-  userResource: AccessControlFields[];
+  UserACL: AccessControlFields[];
 } | null> => {
   const userResourceData = mapAccessControlToRecord(data);
   return prisma.resource.update({
@@ -215,7 +216,7 @@ export const updateResources = (
       id: resourceId,
     },
     data: {
-      userResource: {
+      UserACL: {
         deleteMany: {
           userId: {},
         },
@@ -225,17 +226,6 @@ export const updateResources = (
         },
       },
     },
-    select: {
-      id: true,
-      userResource: {
-        select: accessControlSelector,
-      },
-      groupResource: {
-        select: accessControlSelector,
-      },
-      roleResource: {
-        select: accessControlSelector,
-      },
-    },
+    select: resourceACLSelector,
   });
 };

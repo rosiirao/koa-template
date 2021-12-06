@@ -1,15 +1,20 @@
 import { Prisma, PrismaPromise, Role } from '@prisma/client';
 import prisma from '../client';
-import { enumerableFlat } from '../group.query';
+import { enumerableFlat } from '../query.shared';
 import { DEFAULT_ROW_COUNT, queryInput, verifyName } from '../query.shared';
 
-export const create = async (
-  name: string,
-  applicationId = 0
-): Promise<Role> => {
+export const create = (name: string, applicationId = 0) => {
   verifyName(name);
   return prisma.role.create({
-    data: { name, applicationId },
+    data: {
+      name,
+      application: {
+        connect: { id: applicationId },
+      },
+      Resource: {
+        create: {},
+      },
+    },
   });
 };
 
@@ -18,12 +23,14 @@ export const createMany = async (
     name: string;
     applicationId: number;
   }>
-): Promise<Prisma.BatchPayload> => {
+) => {
   role.forEach(({ name }) => verifyName(name));
 
-  return prisma.role.createMany({
-    data: role,
-  });
+  return prisma.$transaction(
+    role.map(({ name, applicationId }) => {
+      return create(name, applicationId);
+    })
+  );
 };
 
 export const createInherit = async (
@@ -108,9 +115,9 @@ export function assignGroup(
   });
 }
 
-export async function findRole(
-  userId: number,
-  applicationId: number
+export async function listRolesOfUser(
+  applicationId: number,
+  userId: number
 ): Promise<Iterable<Role['id']>> {
   const roleFind = await prisma.role.findMany({
     where: {
@@ -125,8 +132,63 @@ export async function findRole(
       id: true,
     },
   });
-  // role has the inherit map, so need find
-  const role = new Set(roleFind?.map(({ id }) => id));
+  return await listRolesInherited(
+    applicationId,
+    roleFind.map(({ id }) => id)
+  );
+}
+
+export async function listRolesOfGroup(
+  applicationId: number,
+  groupId: number
+): Promise<Iterable<Role['id']>> {
+  const roleFind = await prisma.role.findMany({
+    where: {
+      applicationId,
+      group: {
+        some: {
+          groupId,
+        },
+      },
+    },
+    select: {
+      id: true,
+    },
+  });
+  return await listRolesInherited(
+    applicationId,
+    roleFind.map(({ id }) => id)
+  );
+}
+
+export async function listRolesOfGroups(
+  applicationId: number,
+  groups: Array<number>
+): Promise<Iterable<Role['id']>> {
+  if (groups.length === 0) return [];
+  const roleFind = await prisma.role.findMany({
+    where: {
+      applicationId,
+      group: {
+        some: {
+          groupId: {
+            in: groups,
+          },
+        },
+      },
+    },
+    select: {
+      id: true,
+    },
+  });
+  return await listRolesInherited(
+    applicationId,
+    roleFind.map(({ id }) => id)
+  );
+}
+
+async function listRolesInherited(applicationId: number, roles: Array<number>) {
+  const role = new Set(roles);
   let currentRole = [...role];
 
   const filterAndAppend = (id: number) => {
@@ -156,7 +218,11 @@ export async function findRole(
   return role;
 }
 
-export function listRole(
+export async function listRoleInherited(applicationId: number, roleId: number) {
+  return listRolesInherited(applicationId, [roleId]);
+}
+
+export function listRoles(
   applicationId: number,
   count = DEFAULT_ROW_COUNT,
   option = {} as {

@@ -37,7 +37,7 @@ export const listApplication = (option?: {
 
 export const findUnique = (
   uniqueInput: { id: number } | { name: string }
-): PrismaPromise<{ id: number } | null> => {
+): PrismaPromise<Application | null> => {
   return prisma.application.findFirst({
     where: uniqueInput,
     select: {

@@ -7,8 +7,8 @@ import {
   /* getGroup, */ findGroupMapByName,
   listRoot,
   getGroup,
-  itemOfEnumerable,
 } from './group.query';
+import { itemOfEnumerable } from './query.shared';
 
 describe('group query test', () => {
   it('find group hierarchy by full name', async () => {

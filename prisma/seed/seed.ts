@@ -1,11 +1,12 @@
 import { seedGroup } from './seed.group';
 import { seedAdmin, seedUser, seedUserGroup } from './seed.user';
 
-import { listUser } from '../../src/query/user.query';
+import { listUsers } from '../../src/query/user.query';
 import { rangeList } from '../../src/utils';
 import { seedRole } from './seed.role';
 import { seedPrivilege } from './seed.privilege';
 import { seedRoleAssign } from './seed.role.assign';
+import { registerNamesResource } from './seed.names.resource';
 
 if (process.argv.length === 0) process.exit(0);
 
@@ -20,7 +21,13 @@ enum SEED_OPTION {
   ROLE = 'role',
   PRIVILEGE = 'privilege',
   ROLE_ASSIGN = 'role_assign',
+  NAMES_RESOURCE = 'names_resource',
 }
+
+const aclCriteria = {
+  applicationId: 1,
+  identities: { id: 1, role: [], group: [] },
+};
 
 if (argv.includes(SEED_OPTION.GROUP)) {
   console.log('seed random groups start ...');
@@ -72,11 +79,15 @@ if (argv.includes(SEED_OPTION.ROLE_ASSIGN)) {
   );
 }
 
+if (argv.includes(SEED_OPTION.NAMES_RESOURCE)) {
+  registerNamesResource();
+}
+
 // TODO: seed resource and acl
 
 if (argv.includes('test')) {
   const listOne = async () => {
-    return listUser(1, undefined, {
+    return listUsers(aclCriteria, 1, undefined, {
       orderBy: 'id',
       desc: true,
     });
@@ -90,11 +101,11 @@ if (argv.includes('test')) {
   // make the max connections successful and then make the 10_000 async query work
   Promise.all(
     rangeList(MAX_CONNECTIONS, () => {
-      return listUser(20).then(() => count++);
+      return listUsers(aclCriteria, 20).then(() => count++);
     })
   ).then(() => {
     rangeList(10_000, () => {
-      listUser(20).then(() => count++);
+      listUsers(aclCriteria, 20).then(() => count++);
     });
   });
 

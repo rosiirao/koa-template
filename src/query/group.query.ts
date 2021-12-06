@@ -9,6 +9,9 @@ import {
   DEFAULT_ROW_COUNT,
   queryInput,
   FullName,
+  enumerableIsEmpty,
+  itemOfEnumerable,
+  enumerableFlat,
 } from './query.shared';
 
 /**
@@ -22,23 +25,6 @@ export type MappedGroup = Record<
     > & { id: number }
   >
 >;
-
-export const itemOfEnumerable = <T>(
-  enumerable = [] as Prisma.Enumerable<T>,
-  index = 0
-): T | undefined =>
-  Array.isArray(enumerable) ? (enumerable as T[]).at(index) : enumerable;
-
-export const enumerableIsEmpty = <T>(
-  enumerable = [] as Prisma.Enumerable<T>
-): boolean =>
-  Array.isArray(enumerable)
-    ? enumerable.length === 0
-    : enumerable === undefined;
-
-export const enumerableFlat = <T>(
-  enumerable = [] as Prisma.Enumerable<T>
-): T[] => (Array.isArray(enumerable) ? enumerable : [enumerable]);
 
 /**
  * Create by full name, if unitId is missing and the unit has found many, then fist one is select as the unit.
@@ -120,6 +106,7 @@ export const create = async (
                 },
               },
             }),
+        Resource: { create: {} },
       },
       select: {
         id: true,
@@ -218,6 +205,7 @@ export const createMany = async (
                       },
                     },
                   }),
+              Resource: { create: {} },
             },
             select: {
               id: true,
@@ -250,7 +238,7 @@ const rootCriteria = {
   },
 };
 
-export const findGroupByUser = async (
+export const listGroupsOfUser = async (
   userId: number
 ): Promise<Iterable<Group['id']>> => {
   const groupFind = await prisma.group.findMany({
@@ -265,7 +253,7 @@ export const findGroupByUser = async (
       id: true,
     },
   });
-  // role has the inherit map, so need find
+  // Group has the inherit map, so need find
   const group = new Set(groupFind?.map(({ id }) => id));
   let currentGroup = [...group];
 

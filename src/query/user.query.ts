@@ -10,8 +10,16 @@ import createHttpError from 'http-errors';
 import { sliceMap } from '../utils';
 
 import prisma from './client';
-import { queryInput, orderByInput, DEFAULT_ROW_COUNT } from './query.shared';
+import {
+  queryInput,
+  orderByInput,
+  DEFAULT_ROW_COUNT,
+  listQueryCriteria,
+} from './query.shared';
 import { OrderByQuery } from './query.shared';
+
+import { aclRelationClause } from './application/shared.application.query';
+import { IIdentityState } from '../app';
 
 type UserCreateInput = {
   email: string;
@@ -72,6 +80,9 @@ export const create = async ({
           password,
         },
       },
+      Resource: {
+        create: {},
+      },
     },
   });
 
@@ -97,7 +108,11 @@ type UserResult = User & {
   profile: Profile | null;
 };
 
-export function listUser(
+export function listUsers(
+  aclCriteria: {
+    applicationId: number;
+    identities: IIdentityState['identities'];
+  },
   count = DEFAULT_ROW_COUNT,
   option = {} as {
     start?: number;
@@ -110,15 +125,16 @@ export function listUser(
     'id'
   );
   const { skip = 1, start = 1 } = option;
+  const { applicationId, identities } = aclCriteria ?? {};
   return prisma.user.findMany({
     include: {
       posts: true,
       profile: true,
     },
-    take: count,
-    ...queryInput('skip', skip, skip > 1),
-    ...queryInput('cursor', { id: start }, start > 1),
-    ...queryInput('orderBy', orderBy),
+    where: {
+      Resource: aclRelationClause(identities, applicationId, 'UnityResource'),
+    },
+    ...listQueryCriteria(count, skip, start, orderBy),
   });
 }
 
@@ -194,4 +210,13 @@ export function findCredential(uniqueInput: {
 
 export function countUser(): PrismaPromise<number> {
   return prisma.user.count();
+}
+
+export function updateUser(id: number, data: User) {
+  return prisma.user.update({
+    where: {
+      id,
+    },
+    data,
+  });
 }
