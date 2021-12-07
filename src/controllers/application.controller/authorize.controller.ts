@@ -6,7 +6,7 @@ import { listRolesOfUser } from '../../query/application/role.query';
 import { listGroupsOfUser } from '../../query/group.query';
 import { IIdentityState, AuthorizedState } from '../../app';
 import { listPrivilegeAssignments } from '../../query/application/privilege.query';
-import { listApplication } from '../../query/application/application.query';
+import { findUnique } from '../../query/application/application.query';
 
 /**
  * Get the authorized state to the application
@@ -17,17 +17,13 @@ export async function authorizeApplicationState(
   state: AuthorizedState,
   requestMethod: Router.RouterContext['method']
 ): Promise<Partial<AuthorizedState>> {
-  const application = await listApplication({ name: applicationName });
-  if (application.length > 1) {
-    throw new Error(
-      `Application(${applicationName}) conflicts with same name with other application`
-    );
-  }
-  if (application.length === 0) {
+  const application = await findUnique({ name: applicationName });
+
+  if (application == undefined) {
     throw createHttpError(404, `Application(${applicationName}) not found`);
   }
 
-  const applicationId = application[0].id;
+  const applicationId = application.id;
   const userId = state.identities?.id;
   if (userId === undefined)
     throw createHttpError(
@@ -50,12 +46,10 @@ export async function authorizeApplicationState(
     };
 
   // Require privileges
-  if (
-    [...privileges].every((p) => comparePrivilege(p, subjectPrivilege) <= 0)
-  ) {
+  if (!containsPrivilege([...privileges], subjectPrivilege)) {
     throw createHttpError(
       403,
-      `No permission to ${Privilege[subjectPrivilege]} on application ${applicationName}(${applicationName})`
+      `No permission to ${Privilege[subjectPrivilege]} on application(${applicationName})`
     );
   }
   return {
@@ -262,6 +256,25 @@ export async function getPrivileges(
   }, new Set());
 }
 
+export const authorize: Router.Middleware<AuthorizedState> = async (
+  ctx,
+  next
+) => {
+  const { id } = ctx.state.user;
+  if (id === undefined) {
+    throw createHttpError(401);
+  }
+  const groups = await listGroupsOfUser(id);
+
+  ctx.state.identities = {
+    id,
+    role: [],
+    group: groups,
+  };
+
+  return next();
+};
+
 export function grant(
   object: {
     applicationId: number;
@@ -284,7 +297,7 @@ export function grant(
   return [applicationId, resourceId, userId];
 }
 
-const getSubjectPrivilege = (requestMethod: Router.RouterContext['method']) => {
+function getSubjectPrivilege(requestMethod: Router.RouterContext['method']) {
   const privilegeOnRequestMethod = {
     GET: Privilege.READ_RESOURCE,
     POST: Privilege.CREATE_RESOURCE,
@@ -297,26 +310,7 @@ const getSubjectPrivilege = (requestMethod: Router.RouterContext['method']) => {
   return (
     privilegeOnRequestMethod[requestMethod] ?? privilegeOnRequestMethod['*']
   );
-};
-
-export const authorize: Router.Middleware<AuthorizedState> = async (
-  ctx,
-  next
-) => {
-  const { id } = ctx.state.user;
-  if (id === undefined) {
-    throw createHttpError(401);
-  }
-  const groups = await listGroupsOfUser(id);
-
-  ctx.state.identities = {
-    id,
-    role: [],
-    group: groups,
-  };
-
-  return next();
-};
+}
 
 function comparePrivilege(privilege: Privilege, compared: Privilege) {
   const order = [
@@ -327,4 +321,8 @@ function comparePrivilege(privilege: Privilege, compared: Privilege) {
     Privilege.DELETE_RESOURCE,
   ];
   return order.indexOf(privilege) - order.indexOf(compared);
+}
+
+function containsPrivilege(privileges: Array<Privilege>, compared: Privilege) {
+  return privileges.some((p) => comparePrivilege(p, compared) >= 0);
 }

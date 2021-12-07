@@ -2,10 +2,10 @@
   [x] The applicationId of privilege assignment default set with *1*
 - API
   - Application
-    [ ] List applications, the list need privileges of no anonymous, access the resources in them or modify them does
-    [ ] Add application
-    [ ] Remove application
-    [ ] Modify application
+    [ ] List applications, excludes the privilege of not anonymous, the list does not require any privileges, including accessing the resources in them or modify them does
+    [x] Add application
+    [x] Remove application
+    [x] Modify application
     - role
       [ ] List roles of application
       [ ] Add role
@@ -40,3 +40,6 @@
   [ ] Add *administrator* role On Application *Root*
   [ ] Modify the privileges of *administrator* role 
   [ ] Add Application *Test* with the role *administrator*
+- Form validation solution
+  [ ] A unity form validation solution
+  

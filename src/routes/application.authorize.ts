@@ -12,19 +12,19 @@ import Router from '@koa/router';
 import { match } from 'path-to-regexp';
 
 /**
- * Authorize the application and the optional resource with the optional applicationName and resourceId in path
+ * Authorize router with the optional applicationName and resourceId in path
  * It will assign the *IIdentityState*, and the *ISubject*, *IPrivilege* if the application path parameter is present, into *ctx.state*
  * @param router
  * @param paramsName The route path contains applicationName and optional resourceId param
  */
-export const authorizeParamRoute = (
+export function authorizeParamRoute(
   router: Router<AuthorizedState>,
   paramsName?: {
     applicationName: string;
     resourceId?: string;
   },
   findACL?: Parameters<typeof loadResourceByParam>[0]
-) => {
+) {
   router.use(verifyAuthToken).use(authorize);
   if (paramsName === undefined) return router;
 
@@ -33,16 +33,16 @@ export const authorizeParamRoute = (
   if (resourceId !== undefined)
     router.param('resourceId', loadResourceByParam(findACL));
   return router;
-};
+}
 
 /**
- * Authorize the application and the optional resource with the optional application path parameter
+ * Authorize router with the optional application path parameter
  * It will assign the *IIdentityState*, and the *ISubject*, *IPrivilege* if the application path parameter is present, into *ctx.state*
  * @param root
  * @param path The route path contains applicationName and optional resourceId param
  * @param findACL The function to get resource data including ACL data
  */
-export const authorizeRoute = (
+export function authorizeRoute(
   router: Router<AuthorizedState>,
   path?: {
     params: {
@@ -53,7 +53,7 @@ export const authorizeRoute = (
     parameterizedPath: string;
   },
   findACL?: Parameters<typeof loadResourceByParam>[0]
-) => {
+) {
   router.use(verifyAuthToken).use(authorize);
   if (path === undefined) return router;
 
@@ -89,4 +89,24 @@ export const authorizeRoute = (
     return next();
   });
   return router;
-};
+}
+
+/**
+ * Authorize the application with the optional application path parameter
+ * It will assign the *IIdentityState*, and the *ISubject*, *IPrivilege* if the application path parameter is present, into *ctx.state*
+ * @param route
+ * @param name
+ */
+export function authorizeApplication(
+  route: Router<AuthorizedState>,
+  name: string
+) {
+  route.use(async (ctx, next) => {
+    ctx.state = {
+      ...ctx.state,
+      ...(await authorizeApplicationState(name, ctx.state, ctx.method)),
+    };
+    return next();
+  });
+  return route;
+}

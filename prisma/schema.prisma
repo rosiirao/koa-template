@@ -43,7 +43,7 @@ model User {
   role      RoleUserAssignment[]
   privilege PrivilegeUserAssignment[]
 
-  resourceId Int              @unique
+  resourceId Int           @unique
   Resource   NamesResource @relation(fields: [resourceId], references: [id])
 }
 
@@ -60,7 +60,7 @@ model Group {
   privilege     PrivilegeGroupAssignment[]
   groupResource GroupResourceAccessControl[]
 
-  resourceId Int              @unique
+  resourceId Int           @unique
   Resource   NamesResource @relation(fields: [resourceId], references: [id])
 }
 
@@ -178,6 +178,8 @@ model Application {
   PrivilegeUserAssignment  PrivilegeUserAssignment[]
   PrivilegeGroupAssignment PrivilegeGroupAssignment[]
   PrivilegeRoleAssignment  PrivilegeRoleAssignment[]
+
+  @@unique([name])
 }
 
 // The role only works with application, and have unique name in every application.
@@ -194,7 +196,7 @@ model Role {
   group        RoleGroupAssignment[]
   roleResource RoleResourceAccessControl[]
 
-  resourceId Int              @unique
+  resourceId Int           @unique
   Resource   NamesResource @relation(fields: [resourceId], references: [id])
   @@unique([name, applicationId])
 }
@@ -204,7 +206,7 @@ model PrivilegeRoleAssignment {
   role   Role @relation(fields: [roleId], references: [id])
 
   applicationId Int
-  application   Application @relation(fields: [applicationId], references: [id])
+  application   Application @relation(onDelete: Cascade, fields: [applicationId], references: [id])
 
   privilege Privilege
 
@@ -218,7 +220,7 @@ model PrivilegeUserAssignment {
   user   User @relation(fields: [userId], references: [id])
 
   applicationId Int
-  application   Application @relation(fields: [applicationId], references: [id])
+  application   Application @relation(onDelete: Cascade, fields: [applicationId], references: [id])
 
   privilege Privilege
 
@@ -232,7 +234,7 @@ model PrivilegeGroupAssignment {
   group   Group @relation(fields: [groupId], references: [id])
 
   applicationId Int
-  application   Application @relation(fields: [applicationId], references: [id])
+  application   Application @relation(onDelete: Cascade, fields: [applicationId], references: [id])
 
   privilege Privilege
 
