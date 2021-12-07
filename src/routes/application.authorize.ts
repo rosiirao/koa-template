@@ -9,12 +9,11 @@ import { verifyAuthToken } from '../controllers/auth.controller';
 import { AuthorizedState } from '../app';
 
 import Router from '@koa/router';
-import { findACL } from '../query/acl.query/names.acl.query';
 import { match } from 'path-to-regexp';
 
 /**
- * Authorize the application and the optional resource with the applicationName and optional resourceId in path
- * It will assign the *IIdentityState* and *ISubject* into *ctx.state*
+ * Authorize the application and the optional resource with the optional applicationName and resourceId in path
+ * It will assign the *IIdentityState*, and the *ISubject*, *IPrivilege* if the application path parameter is present, into *ctx.state*
  * @param router
  * @param paramsName The route path contains applicationName and optional resourceId param
  */
@@ -23,7 +22,8 @@ export const authorizeParamRoute = (
   paramsName?: {
     applicationName: string;
     resourceId?: string;
-  }
+  },
+  findACL?: Parameters<typeof loadResourceByParam>[0]
 ) => {
   router.use(verifyAuthToken).use(authorize);
   if (paramsName === undefined) return router;
@@ -36,8 +36,8 @@ export const authorizeParamRoute = (
 };
 
 /**
- * Authorize the application and the optional resource with the applicationName and optional resourceId in path
- * It will assign the *IIdentityState* and *ISubject* into *ctx.state*
+ * Authorize the application and the optional resource with the optional application path parameter
+ * It will assign the *IIdentityState*, and the *ISubject*, *IPrivilege* if the application path parameter is present, into *ctx.state*
  * @param root
  * @param path The route path contains applicationName and optional resourceId param
  * @param findACL The function to get resource data including ACL data

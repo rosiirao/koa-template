@@ -3,7 +3,7 @@ import createHttpError from 'http-errors';
 import compose from 'koa-compose';
 import { findACL } from '../../query/acl.query/names.acl.query';
 import { AuthorizedState } from '../../app';
-import { authorizeRoute } from '../application.route';
+import { authorizeRoute } from '../application.authorize';
 import { itemOfEnumerable, queryInput } from '../../query/query.shared';
 import { findNames } from '../../controllers/application.controller/names';
 

@@ -31,7 +31,7 @@
     [ ] Add resource and get the resource id
     [ ] Remove resource
     [ ] Modify resource access control list
-    [ ] Query resource with access control enabled
+    [x] Query resource with access control enabled
 - Blog Application
   - [ ] Post 
     - [ ] Author, Reader

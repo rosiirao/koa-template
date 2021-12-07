@@ -9,7 +9,7 @@ import {
 } from '../controllers/auth.controller';
 import { cors } from '../controllers/cors';
 
-import { authorizeParamRoute } from './application.route';
+import { authorizeParamRoute } from './application.authorize';
 
 import body from 'koa-body';
 import compose from 'koa-compose';

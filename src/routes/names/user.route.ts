@@ -4,7 +4,7 @@ import compose from 'koa-compose';
 import { findACL } from '../../query/acl.query/names.acl.query';
 import { AuthorizedState } from '../../app';
 import { findUser } from '../../controllers/application.controller/names/user.controller';
-import { authorizeRoute } from '../application.route';
+import { authorizeRoute } from '../application.authorize';
 
 const router = new Router<AuthorizedState>();
 
