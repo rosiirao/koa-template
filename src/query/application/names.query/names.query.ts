@@ -5,7 +5,7 @@ import {
   DEFAULT_ROW_COUNT,
   listQueryCriteria,
   orderByInput,
-  OrderByQuery,
+  PageOption,
   queryInput,
 } from '../../../query/query.shared';
 
@@ -18,13 +18,8 @@ const typeSelector = (query?: 'user' | 'group' | 'role') => ({
   ...queryInput('select', query && { [query]: true }),
 });
 
-export async function queryNames(
-  option = {} as {
-    count?: number;
-    start?: number;
-    skip?: number;
-    orderBy?: OrderByQuery<Prisma.UserOrderByWithAggregationInput>;
-  },
+export async function listNames(
+  option = {} as PageOption<Prisma.UserOrderByWithAggregationInput>,
   query?: 'user' | 'group' | 'role'
 ) {
   const { count = DEFAULT_ROW_COUNT, skip = 0, start = 1 } = option;

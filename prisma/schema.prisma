@@ -108,7 +108,7 @@ model NamesResource {
 model Resource {
   id            Int                          @id
   applicationId Int
-  owner         Application                  @relation(fields: [applicationId], references: [id])
+  owner         Application                  @relation(onDelete: Cascade, fields: [applicationId], references: [id])
   UserACL       UserResourceAccessControl[]
   GroupACL      GroupResourceAccessControl[]
   RoleACL       RoleResourceAccessControl[]
@@ -122,10 +122,10 @@ model UserResourceAccessControl {
   id Int @id @default(autoincrement())
 
   userId Int
-  user   User @relation(fields: [userId], references: [id])
+  user   User @relation(onDelete: Cascade, fields: [userId], references: [id])
 
   resourceId Int
-  resource   Resource @relation(fields: [resourceId], references: [id])
+  resource   Resource @relation(onDelete: Cascade, fields: [resourceId], references: [id])
 
   owner  Boolean @default(false)
   author Boolean @default(false)
@@ -139,10 +139,10 @@ model GroupResourceAccessControl {
   id Int @id @default(autoincrement())
 
   groupId Int
-  group   Group @relation(fields: [groupId], references: [id])
+  group   Group @relation(onDelete: Cascade, fields: [groupId], references: [id])
 
   resourceId Int
-  resource   Resource @relation(fields: [resourceId], references: [id])
+  resource   Resource @relation(onDelete: Cascade, fields: [resourceId], references: [id])
 
   owner  Boolean @default(false)
   author Boolean @default(false)
@@ -156,10 +156,10 @@ model RoleResourceAccessControl {
   id Int @id @default(autoincrement())
 
   roleId Int
-  role   Role @relation(fields: [roleId], references: [id])
+  role   Role @relation(onDelete: Cascade, fields: [roleId], references: [id])
 
   resourceId Int
-  resource   Resource @relation(fields: [resourceId], references: [id])
+  resource   Resource @relation(onDelete: Cascade, fields: [resourceId], references: [id])
 
   owner  Boolean @default(false)
   author Boolean @default(false)
@@ -184,11 +184,11 @@ model Application {
 
 // The role only works with application, and have unique name in every application.
 model Role {
-  id            Int                       @id @default(autoincrement())
-  name          String                    @koaTemplate.VarChar(32)
-  applicationId Int
-  application   Application               @relation(fields: [applicationId], references: [id])
-  assignment    PrivilegeRoleAssignment[]
+  id                  Int                       @id @default(autoincrement())
+  name                String                    @koaTemplate.VarChar(32)
+  applicationId       Int
+  application         Application               @relation(onDelete: Cascade, fields: [applicationId], references: [id])
+  PrivilegeAssignment PrivilegeRoleAssignment[]
 
   assignee     RoleInherit[]               @relation("assignee")
   inherit      RoleInherit[]               @relation("inherit")
@@ -203,7 +203,7 @@ model Role {
 
 model PrivilegeRoleAssignment {
   roleId Int
-  role   Role @relation(fields: [roleId], references: [id])
+  role   Role @relation(onDelete: Cascade, fields: [roleId], references: [id])
 
   applicationId Int
   application   Application @relation(onDelete: Cascade, fields: [applicationId], references: [id])
@@ -245,20 +245,22 @@ model PrivilegeGroupAssignment {
 
 model RoleInherit {
   roleId Int
-  role   Role @relation("assignee", fields: [roleId], references: [id])
+  role   Role @relation(onDelete: Cascade, "assignee", fields: [roleId], references: [id])
 
+  // The id of the role which the assignee inherit to
   inheritId Int
-  inherit   Role @relation("inherit", fields: [inheritId], references: [id])
+  // The which the assignee inherit to
+  inherit   Role @relation(onDelete: Cascade, "inherit", fields: [inheritId], references: [id])
 
   @@id([roleId, inheritId])
 }
 
 model RoleUserAssignment {
   userId Int
-  user   User @relation(fields: [userId], references: [id])
+  user   User @relation(onDelete: Cascade, fields: [userId], references: [id])
 
   roleId Int
-  role   Role @relation(fields: [roleId], references: [id])
+  role   Role @relation(onDelete: Cascade, fields: [roleId], references: [id])
 
   @@id([userId, roleId])
   @@index([userId])
@@ -266,10 +268,10 @@ model RoleUserAssignment {
 
 model RoleGroupAssignment {
   groupId Int
-  group   Group @relation(fields: [groupId], references: [id])
+  group   Group @relation(onDelete: Cascade, fields: [groupId], references: [id])
 
   roleId Int
-  role   Role @relation(fields: [roleId], references: [id])
+  role   Role @relation(onDelete: Cascade, fields: [roleId], references: [id])
 
   @@id([groupId, roleId])
   @@index([groupId])

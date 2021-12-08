@@ -1,13 +1,13 @@
 import { Prisma, PrismaPromise, Role } from '@prisma/client';
-import prisma from '../client';
-import { enumerableFlat } from '../query.shared';
-import { DEFAULT_ROW_COUNT, queryInput, verifyName } from '../query.shared';
+import prisma from '../../client';
+import { enumerableFlat, PageOption } from '../../query.shared';
+import { DEFAULT_ROW_COUNT, queryInput, verifyName } from '../../query.shared';
 
-export const create = (name: string, applicationId = 0) => {
-  verifyName(name);
+export const create = (applicationId: number, data: { name: string }) => {
+  verifyName(data.name);
   return prisma.role.create({
     data: {
-      name,
+      ...data,
       application: {
         connect: { id: applicationId },
       },
@@ -17,6 +17,34 @@ export const create = (name: string, applicationId = 0) => {
     },
   });
 };
+
+export function find(id: number) {
+  return prisma.role.findUnique({
+    where: { id },
+    select: {
+      name: true,
+      PrivilegeAssignment: true,
+      inherit: true,
+      assignee: true,
+    },
+  });
+}
+
+export function update(id: number, data: { name: string }) {
+  verifyName(data.name);
+  return prisma.role.update({
+    where: { id },
+    data,
+  });
+}
+
+export function remove(id: number) {
+  return prisma.role.delete({
+    where: {
+      id,
+    },
+  });
+}
 
 export const createMany = async (
   role: Array<{
@@ -28,7 +56,7 @@ export const createMany = async (
 
   return prisma.$transaction(
     role.map(({ name, applicationId }) => {
-      return create(name, applicationId);
+      return create(applicationId, { name });
     })
   );
 };
@@ -224,18 +252,15 @@ export async function listRoleInherited(applicationId: number, roleId: number) {
 
 export function listRoles(
   applicationId: number,
-  count = DEFAULT_ROW_COUNT,
-  option = {} as {
-    start?: number;
-    skip?: number;
-  }
+  option = {} as PageOption<Prisma.RoleOrderByWithAggregationInput>
 ): PrismaPromise<Array<{ id: number; name: string }>> {
-  const { start = 1, skip = 1 } = option;
+  const { start = 1, skip = 1, count = DEFAULT_ROW_COUNT } = option;
+
   return prisma.role.findMany({
     where: {
       applicationId,
     },
-    take: count,
+    ...queryInput('take', count, isFinite(count)),
     ...queryInput('skip', skip, skip > 1),
     ...queryInput('cursor', { id: start }, start > 1),
     select: {

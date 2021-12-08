@@ -4,6 +4,13 @@ export const LENGTH_MAX_NAME = 32;
 export const DEFAULT_ROW_COUNT = 20;
 export const MAX_CONNECTIONS = 5;
 
+export type PageOption<PrismaOrderByInput> = {
+  start?: number;
+  skip?: number;
+  count?: number;
+  orderBy?: OrderByQuery<PrismaOrderByInput>;
+};
+
 /**
  * FullName is the name with hierarchy, e.g. dev/Beijing/root
  */

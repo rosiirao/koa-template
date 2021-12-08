@@ -2,7 +2,7 @@ import { Prisma, Privilege } from '.prisma/client';
 import Router from '@koa/router';
 import createHttpError from 'http-errors';
 import Koa from 'koa';
-import { listRolesOfUser } from '../../query/application/role.query';
+import { listRolesOfUser } from '../../query/application/names.query/role.query';
 import { listGroupsOfUser } from '../../query/group.query';
 import { IIdentityState, AuthorizedState } from '../../app';
 import { listPrivilegeAssignments } from '../../query/application/privilege.query';

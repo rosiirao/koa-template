@@ -10,6 +10,12 @@ import {
 } from '../../controllers/application.controller/application.controller';
 import { authorizeApplication, authorizeRoute } from '../application.authorize';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
+import {
+  createRole,
+  deleteRole,
+  getRole,
+  updateRole,
+} from '../../controllers/application.controller/names/role.controller';
 
 const router = authorizeRoute(
   new Router({
@@ -50,13 +56,7 @@ router
     try {
       ctx.body = await createApplication(data, ctx.state.identities.id);
     } catch (e) {
-      if (e instanceof PrismaClientKnownRequestError && e.code === 'P2002') {
-        throw createHttpError(
-          422,
-          `The name *${data.name}* is conflicted with one of other applications`
-        );
-      }
-      throw e;
+      prismaErrorHandler(e);
     }
   })
   .put('/:id', body(), async (ctx) => {
@@ -94,14 +94,55 @@ router
     try {
       ctx.body = await deleteApplication({ id });
     } catch (e) {
-      if (e instanceof PrismaClientKnownRequestError && e.code === 'P2025') {
-        throw createHttpError(
-          404,
-          `The application with id(${id}) is not found`
-        );
-      }
-      throw e;
+      prismaErrorHandler(e);
     }
   });
+
+router
+  .post('/:applicationId/role', body(), async (ctx) => {
+    try {
+      ctx.body = await createRole(
+        ctx.state.subject.applicationId,
+        ctx.request.body
+      );
+    } catch (e) {
+      prismaErrorHandler(e);
+    }
+  })
+  .get('/:applicationId/role/:id', async (ctx) => {
+    try {
+      ctx.body = await getRole(Number(ctx.params.id));
+    } catch (e) {
+      prismaErrorHandler(e);
+    }
+  })
+  .put('/:applicationId/role/:id', body(), async (ctx) => {
+    try {
+      ctx.body = await updateRole(Number(ctx.params.id), ctx.request.body);
+    } catch (e) {
+      prismaErrorHandler(e);
+    }
+  })
+  .delete('/:applicationId/role/:id', async (ctx) => {
+    try {
+      ctx.body = await deleteRole(Number(ctx.params.id));
+    } catch (e) {
+      prismaErrorHandler(e);
+    }
+  });
+
+function prismaErrorHandler(e: unknown) {
+  if (!(e instanceof PrismaClientKnownRequestError)) throw e;
+  if (e.code === 'P2002') {
+    throw createHttpError(
+      422,
+      `There is a conflict with one of other applications`
+    );
+  }
+  if (e.code === 'P2025') {
+    throw createHttpError(404);
+  }
+  throw e;
+}
 
 export default compose([router.routes(), router.allowedMethods()]);

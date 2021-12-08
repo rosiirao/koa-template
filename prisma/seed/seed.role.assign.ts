@@ -5,7 +5,7 @@ import {
   assignUser,
   countRole,
   listRoles,
-} from '../../src/query/application/role.query';
+} from '../../src/query/application/names.query/role.query';
 import { countUser, listUsers } from '../../src/query/user.query';
 import { debounceAsyncExecutor } from '../../src/utils';
 import { getApplication } from './seed.role';
@@ -24,7 +24,7 @@ export async function seedRoleAssign(): Promise<Prisma.BatchPayload> {
   const [user, group, role] = await Promise.all([
     listUsers(aclCriteria, await countUser()),
     listGroup(),
-    listRoles(application.id, await countRole()),
+    listRoles(application.id, { count: await countRole() }),
   ]);
 
   const userPerRole = Math.ceil(role.length / user.length) + 20;

@@ -1,5 +1,5 @@
 import { Prisma, Privilege } from '@prisma/client';
-import { listRoles } from '../../src/query/application/role.query';
+import { listRoles } from '../../src/query/application/names.query/role.query';
 import { listUsers } from '../../src/query/user.query';
 import { assignPrivilege } from '../../src/query/application/privilege.query';
 import {
@@ -28,8 +28,9 @@ const listAllRole = async () => {
   let role = [] as ThenArg<typeof listRoles>,
     nextRole: typeof role;
   while (
-    (nextRole = await listRoles(applicationId, accCount, {
+    (nextRole = await listRoles(applicationId, {
       start: (role.at(-1)?.id ?? 0) + 1,
+      count: accCount,
     })).length > 0
   ) {
     role = role.concat(nextRole);

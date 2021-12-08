@@ -7,16 +7,16 @@
     [x] Remove application
     [x] Modify application
     - role
-      [ ] List roles of application
-      [ ] Add role
-      [ ] Remove role
-      [ ] Modify role
+      [x] List roles of application: the data can be fetched by getApplication api
+      [x] Add role
+      [x] Remove role
+      [x] Modify role
       [ ] Assign role on role
       [ ] Revoke role on role
-      [ ] Assign role on role
-      [ ] Revoke role on role
-      [ ] Assign role on role
-      [ ] Revoke role on role
+      [ ] Assign role on user
+      [ ] Revoke role on user
+      [ ] Assign role on group
+      [ ] Revoke role on group
     - privilege
       [ ] Get privileges of application
       [ ] Grant on Role 
