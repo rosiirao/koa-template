@@ -1,4 +1,4 @@
-import { debounceAsyncExecutor, randomArbitrary } from '.';
+import { debounceAsyncExecutor, jsonStringify, randomArbitrary } from '.';
 import { nextId, sliceMap, rangeList, randomCharacter } from './util';
 
 describe('util test', () => {
@@ -46,5 +46,29 @@ describe('util test', () => {
       .concat(new Array(rest).fill(1000));
     expect(result).toEqual(expected);
     expect(() => executor.add(() => Promise.resolve(2))).toThrow('finish');
+  });
+
+  it('enhanced json stringify', async () => {
+    const x1 = {
+      a: [1, 2, 3],
+      b: { x: 1 },
+      c: { t: 1, d: 2, c: undefined, b: Symbol(1) },
+    };
+    const x2 = {
+      ...x1,
+      a: new Set(x1.a),
+      c: new Map(Object.entries(x1.c)),
+    };
+    expect(JSON.stringify(x1, null, '  ')).toBe(jsonStringify(x2, '  '));
+    const x3 = {} as Record<string, unknown>;
+    x3.x3 = { n: x3 };
+    const x4 = [] as Array<unknown>;
+    x4.push(x4);
+
+    const p = { a: 1 };
+    const x5 = { x3: { x4: p }, x4: { x6: p }, x5: [p] };
+    expect(() => jsonStringify(x3)).toThrowError();
+    expect(() => jsonStringify(x4)).toThrowError();
+    expect(() => jsonStringify(x5)).not.toThrowError();
   });
 });

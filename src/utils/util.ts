@@ -156,3 +156,80 @@ export function randomCharacter(
     return '';
   }
 }
+
+/**
+ * Works like JSON.stringify, but it can convert Set and Map to JSON Array and JSON Object
+ */
+export function jsonStringify(
+  json_input: unknown,
+  space?: string
+): string | undefined {
+  const space_insert = (level: number) =>
+    space ? `${rangeList(level, () => space).join('')}` : '';
+  const wrap_insert = space ? '\n' : '';
+
+  // if valueStack existed when loop, it must be a cyclic error
+  const valueStack = new Set();
+
+  function jsonStringifyInLevel(x: unknown, level: number): string | undefined {
+    if (valueStack.has(x)) throw new TypeError('cyclic object value');
+
+    valueStack.add(x);
+    const left_space = space_insert(level);
+    const tab_space = space_insert(level + 1);
+    if (!(x instanceof Object)) {
+      try {
+        return JSON.stringify(x, null, space);
+      } finally {
+        valueStack.delete(x);
+      }
+    }
+
+    if (Array.isArray(x)) {
+      try {
+        return `[${wrap_insert}${tab_space}${x
+          .map((v) => jsonStringifyInLevel(v, level + 1))
+          .join(`,${wrap_insert}${tab_space}`)}${wrap_insert}${left_space}]`;
+      } finally {
+        valueStack.delete(x);
+      }
+    }
+    if (x instanceof Set) {
+      try {
+        return jsonStringifyInLevel([...x], level);
+      } finally {
+        valueStack.delete(x);
+      }
+    }
+    if (x instanceof Map) {
+      try {
+        return jsonStringifyInLevel(
+          [...x.keys()].reduce<Record<string, unknown>>((acc, k) => {
+            acc[String(k)] = x.get(k);
+            return acc;
+          }, {}),
+          level
+        );
+      } finally {
+        valueStack.delete(x);
+      }
+    }
+
+    const pair = Object.entries(x).reduce<Array<string>>((acc, entry) => {
+      const [key, value] = entry;
+      const jsonValue = jsonStringifyInLevel(value, level + 1);
+      if (jsonValue === undefined) return acc;
+      acc.push(`${JSON.stringify(String(key))}: ${jsonValue}`);
+      return acc;
+    }, []);
+
+    try {
+      return `{${wrap_insert}${tab_space}${pair.join(
+        `,${wrap_insert}${tab_space}`
+      )}${wrap_insert}${left_space}}`;
+    } finally {
+      valueStack.delete(x);
+    }
+  }
+  return jsonStringifyInLevel(json_input, 0);
+}
