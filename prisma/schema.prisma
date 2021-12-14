@@ -173,11 +173,10 @@ model Application {
   id       Int        @id @default(autoincrement())
   name     String     @koaTemplate.VarChar(32)
   resource Resource[]
-  role     Role[]
+  Role     Role[]
 
   PrivilegeUserAssignment  PrivilegeUserAssignment[]
   PrivilegeGroupAssignment PrivilegeGroupAssignment[]
-  PrivilegeRoleAssignment  PrivilegeRoleAssignment[]
 
   @@unique([name])
 }
@@ -199,20 +198,17 @@ model Role {
   resourceId Int           @unique
   Resource   NamesResource @relation(fields: [resourceId], references: [id])
   @@unique([name, applicationId])
+  @@index([id, applicationId])
 }
 
 model PrivilegeRoleAssignment {
   roleId Int
   role   Role @relation(onDelete: Cascade, fields: [roleId], references: [id])
 
-  applicationId Int
-  application   Application @relation(onDelete: Cascade, fields: [applicationId], references: [id])
-
   privilege Privilege
 
-  @@id([roleId, privilege, applicationId])
+  @@id([roleId, privilege])
   @@index([roleId])
-  @@index([roleId, applicationId])
 }
 
 model PrivilegeUserAssignment {
@@ -253,6 +249,7 @@ model RoleInherit {
   inherit   Role @relation(onDelete: Cascade, "inherit", fields: [inheritId], references: [id])
 
   @@id([roleId, inheritId])
+  @@index([inheritId])
 }
 
 model RoleUserAssignment {
@@ -263,7 +260,7 @@ model RoleUserAssignment {
   role   Role @relation(onDelete: Cascade, fields: [roleId], references: [id])
 
   @@id([userId, roleId])
-  @@index([userId])
+  @@index([roleId])
 }
 
 model RoleGroupAssignment {
@@ -275,6 +272,7 @@ model RoleGroupAssignment {
 
   @@id([groupId, roleId])
   @@index([groupId])
+  @@index([roleId])
 }
 
 enum Privilege {

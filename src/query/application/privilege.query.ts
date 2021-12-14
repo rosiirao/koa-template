@@ -75,7 +75,14 @@ export async function listPrivilegeAssignments(applicationId: number) {
     select: {
       PrivilegeGroupAssignment: { select: { groupId: true, privilege: true } },
       PrivilegeUserAssignment: { select: { userId: true, privilege: true } },
-      PrivilegeRoleAssignment: { select: { roleId: true, privilege: true } },
+      Role: {
+        select: {
+          id: true,
+          PrivilegeAssignment: {
+            select: { privilege: true },
+          },
+        },
+      },
     },
   });
   return found;

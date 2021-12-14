@@ -35,10 +35,18 @@ export function findUnique(
     select: {
       id: true,
       name: true,
-      role: true,
+      Role: {
+        select: {
+          id: true,
+          PrivilegeAssignment: {
+            select: {
+              privilege: true,
+            },
+          },
+        },
+      },
       PrivilegeUserAssignment: true,
       PrivilegeGroupAssignment: true,
-      PrivilegeRoleAssignment: true,
     },
   });
 }

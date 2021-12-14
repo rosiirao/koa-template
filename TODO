@@ -11,8 +11,8 @@
       [x] Add role
       [x] Remove role
       [x] Modify role
-      [ ] Assign role on role
-      [ ] Revoke role on role
+      [X] Assign role on role
+      [X] Revoke role on role
       [ ] Assign role on user
       [ ] Revoke role on user
       [ ] Assign role on group

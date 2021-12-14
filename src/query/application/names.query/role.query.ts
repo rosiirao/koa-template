@@ -3,6 +3,13 @@ import prisma from '../../client';
 import { enumerableFlat, PageOption } from '../../query.shared';
 import { DEFAULT_ROW_COUNT, queryInput, verifyName } from '../../query.shared';
 
+const roleSelector = {
+  name: true,
+  PrivilegeAssignment: true,
+  inherit: true,
+  assignee: true,
+};
+
 export const create = (applicationId: number, data: { name: string }) => {
   verifyName(data.name);
   return prisma.role.create({
@@ -18,30 +25,30 @@ export const create = (applicationId: number, data: { name: string }) => {
   });
 };
 
-export function find(id: number) {
-  return prisma.role.findUnique({
-    where: { id },
-    select: {
-      name: true,
-      PrivilegeAssignment: true,
-      inherit: true,
-      assignee: true,
-    },
+export function find(id: number, applicationId?: number) {
+  return prisma.role.findFirst({
+    where: { id, ...queryInput('applicationId', applicationId) },
+    select: roleSelector,
   });
 }
 
-export function update(id: number, data: { name: string }) {
+export function update(
+  id: number,
+  data: { name: string },
+  applicationId?: number
+) {
   verifyName(data.name);
   return prisma.role.update({
-    where: { id },
+    where: { id, ...queryInput('applicationId', applicationId) },
     data,
   });
 }
 
-export function remove(id: number) {
+export function remove(id: number, applicationId?: number) {
   return prisma.role.delete({
     where: {
       id,
+      ...queryInput('applicationId', applicationId),
     },
   });
 }
@@ -74,7 +81,7 @@ export const createInherit = async (
 
 export const inheritTo = async (
   role: Prisma.Enumerable<string>,
-  inherit: string,
+  inheritTo: string,
   applicationId: number
 ): Promise<void> => {
   const assignee = await prisma.role.findMany({
@@ -86,7 +93,7 @@ export const inheritTo = async (
       assignee: {
         none: {
           inherit: {
-            name: inherit,
+            name: inheritTo,
           },
         },
       },
@@ -98,7 +105,7 @@ export const inheritTo = async (
   await prisma.role.update({
     where: {
       name_applicationId: {
-        name: inherit,
+        name: inheritTo,
         applicationId,
       },
     },
@@ -109,8 +116,42 @@ export const inheritTo = async (
         },
       },
     },
+    select: roleSelector,
   });
 };
+
+export function inheritToById(id: number, inheritTo: number) {
+  return prisma.role.update({
+    where: {
+      id,
+    },
+    data: {
+      assignee: {
+        create: {
+          inheritId: inheritTo,
+        },
+      },
+    },
+    select: roleSelector,
+  });
+}
+
+export function revokeInherit(id: number, inheritTo: number) {
+  return prisma.role.update({
+    where: { id },
+    data: {
+      assignee: {
+        delete: {
+          roleId_inheritId: {
+            inheritId: inheritTo,
+            roleId: id,
+          },
+        },
+      },
+    },
+    select: roleSelector,
+  });
+}
 
 /**
  *

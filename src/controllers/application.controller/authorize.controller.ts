@@ -32,18 +32,18 @@ export async function authorizeApplicationState(
     );
   const roles = await listRolesOfUser(applicationId, userId);
 
-  const privileges = await getPrivileges(applicationId, state.identities);
+  const statePatch = {
+    subject: { applicationId },
+    identities: {
+      ...state.identities,
+      role: [{ applicationId, grant: roles }],
+    },
+  };
+  const privileges = await getPrivileges(applicationId, statePatch.identities);
   const subjectPrivilege = getSubjectPrivilege(requestMethod);
 
   // Require no privileges
-  if (subjectPrivilege === Privilege.NONE)
-    return {
-      subject: { applicationId },
-      identities: {
-        ...state.identities,
-        role: [{ applicationId, grant: roles }],
-      },
-    };
+  if (subjectPrivilege === Privilege.NONE) return statePatch;
 
   // Require privileges
   if (!containsPrivilege([...privileges], subjectPrivilege)) {
@@ -53,11 +53,7 @@ export async function authorizeApplicationState(
     );
   }
   return {
-    subject: { applicationId },
-    identities: {
-      ...state.identities,
-      role: [{ applicationId, grant: roles }],
-    },
+    ...statePatch,
     privilege: {
       applicationId,
       grant: [...privileges],
@@ -213,6 +209,19 @@ export async function getPrivileges(
   type T = 'User' | 'Group' | 'Role';
   const identityKeys: T[] = ['User', 'Group', 'Role'];
 
+  const assignmentsByKey = {
+    Role: privilegeAssignments?.Role.map(({ id, PrivilegeAssignment }) => ({
+      id,
+      privilege: PrivilegeAssignment.map(({ privilege }) => privilege),
+    })),
+    Group: privilegeAssignments?.PrivilegeGroupAssignment.map(
+      ({ groupId: id, privilege }) => ({ id, privilege: [privilege] })
+    ),
+    User: privilegeAssignments?.PrivilegeUserAssignment.map(
+      ({ userId: id, privilege }) => ({ id, privilege: [privilege] })
+    ),
+  };
+
   function privilegeOnKey(key: T) {
     const identityOnKey =
       key === 'User'
@@ -225,24 +234,18 @@ export async function getPrivileges(
           )?.grant
         : undefined;
     if (identityOnKey === undefined) return;
-    const assignment:
-      | Array<{
-          roleId?: number;
-          groupId?: number;
-          userId?: number;
-          privilege: Privilege;
-        }>
-      | undefined = privilegeAssignments?.[`Privilege${key}Assignment`];
-    return assignment?.reduce<Set<Privilege>>((acc, assignment) => {
-      const assigneeId =
-        assignment[`${key.toLowerCase()}Id` as `${Lowercase<T>}Id`];
-      if (assigneeId === undefined) return acc;
+
+    const assignment = assignmentsByKey[key];
+
+    if (assignment === undefined) return;
+    return assignment?.reduce<Set<Privilege>>((acc, assignmentItem) => {
+      if (assignmentItem === undefined) return acc;
       if (
         typeof identityOnKey === 'number'
-          ? identityOnKey === assigneeId
-          : [...identityOnKey].includes(assigneeId)
+          ? identityOnKey === assignmentItem.id
+          : [...identityOnKey].includes(assignmentItem.id)
       )
-        acc.add(assignment['privilege']);
+        assignmentItem.privilege.forEach((p) => acc.add(p));
       return acc;
     }, new Set());
   }

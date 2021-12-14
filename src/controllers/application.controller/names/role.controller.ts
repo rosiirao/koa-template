@@ -7,9 +7,9 @@ import {
   remove,
   update,
   find,
+  inheritToById,
+  revokeInherit,
 } from '../../../query/application/names.query/role.query';
-
-import { ISubject } from '../../../app';
 
 export async function getUserRoles(applicationId: number, userId: number) {
   const roles = await listRolesOfUser(applicationId, userId);
@@ -30,24 +30,36 @@ export async function getGroupsRoles(
 }
 
 export function findRoles(
-  subject: ISubject['subject'],
+  applicationId: number,
   pageOption?: Parameters<typeof listRoles>[1]
 ) {
-  return listRoles(subject.applicationId, pageOption);
+  return listRoles(applicationId, pageOption);
 }
 
-export function createRole(applicationId: number, data: { name: string }) {
+export function createRole(data: { name: string }, applicationId: number) {
   return create(applicationId, data);
 }
 
-export function getRole(id: number) {
-  return find(id);
+export function getRole(id: number, applicationId?: number) {
+  return find(id, applicationId);
 }
 
-export function deleteRole(id: number) {
-  return remove(id);
+export function deleteRole(id: number, applicationId?: number) {
+  return remove(id, applicationId);
 }
 
-export function updateRole(id: number, data: { name: string }) {
-  return update(id, data);
+export function updateRole(
+  id: number,
+  data: { name: string },
+  applicationId?: number
+) {
+  return update(id, data, applicationId);
+}
+
+export function inheritRole(id: number, inheritTo: number) {
+  return inheritToById(id, inheritTo);
+}
+
+export function deleteInheritRole(id: number, inheritTo: number) {
+  return revokeInherit(id, inheritTo);
 }
