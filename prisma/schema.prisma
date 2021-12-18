@@ -183,14 +183,14 @@ model Application {
 
 // The role only works with application, and have unique name in every application.
 model Role {
-  id                  Int                       @id @default(autoincrement())
-  name                String                    @koaTemplate.VarChar(32)
-  applicationId       Int
-  application         Application               @relation(onDelete: Cascade, fields: [applicationId], references: [id])
-  PrivilegeAssignment PrivilegeRoleAssignment[]
+  id            Int                       @id @default(autoincrement())
+  name          String                    @koaTemplate.VarChar(32)
+  applicationId Int
+  application   Application               @relation(onDelete: Cascade, fields: [applicationId], references: [id])
+  Privilege     PrivilegeRoleAssignment[]
 
-  assignee     RoleInherit[]               @relation("assignee")
-  inherit      RoleInherit[]               @relation("inherit")
+  assignee     RoleInherit[]               @relation("assignor")
+  assignor    RoleInherit[]               @relation("assignee")
   user         RoleUserAssignment[]
   group        RoleGroupAssignment[]
   roleResource RoleResourceAccessControl[]
@@ -243,13 +243,13 @@ model RoleInherit {
   roleId Int
   role   Role @relation(onDelete: Cascade, "assignee", fields: [roleId], references: [id])
 
-  // The id of the role which the assignee inherit to
-  inheritId Int
+  // The id of the role which the role inherit to
+  assignorId Int
   // The which the assignee inherit to
-  inherit   Role @relation(onDelete: Cascade, "inherit", fields: [inheritId], references: [id])
+  assignor   Role @relation(onDelete: Cascade, "assignor", fields: [assignorId], references: [id])
 
-  @@id([roleId, inheritId])
-  @@index([inheritId])
+  @@id([roleId, assignorId])
+  @@index([assignorId])
 }
 
 model RoleUserAssignment {

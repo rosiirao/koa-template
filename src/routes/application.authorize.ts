@@ -4,6 +4,7 @@ import {
   authorizeResourceState,
   loadApplicationByParam,
   loadResourceByParam,
+  requestMethod,
 } from '../controllers/application.controller/authorize.controller';
 import { verifyAuthToken } from '../controllers/auth.controller';
 import { AuthorizedState } from '../app';
@@ -104,7 +105,7 @@ export function authorizeApplication(
   route.use(async (ctx, next) => {
     ctx.state = {
       ...ctx.state,
-      ...(await authorizeApplicationState(name, ctx.state, ctx.method)),
+      ...(await authorizeApplicationState(name, ctx.state, requestMethod(ctx))),
     };
     return next();
   });

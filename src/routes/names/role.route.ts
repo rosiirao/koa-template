@@ -8,11 +8,15 @@ import {
   deleteRole,
   findRoles,
   getRole,
+  revokeRole,
   inheritRole,
   updateRole,
+  grantRole,
 } from '../../controllers/application.controller/names/role.controller';
 import { authorizeParamRoute } from '../application.authorize';
 import { prismaErrorHandler } from '../shared.route';
+import { itemOfEnumerable } from '../../query/query.shared';
+import { requestMethod } from '../../controllers/shared.controller';
 
 const router = authorizeParamRoute(
   new Router({
@@ -46,7 +50,10 @@ router
       subject: { applicationId },
     } = ctx.state;
     try {
-      ctx.body = await getRole(Number(ctx.params.id), applicationId);
+      const role = itemOfEnumerable(
+        await getRole(Number(ctx.params.id), applicationId)
+      );
+      if (role !== undefined) ctx.body = role;
     } catch (e) {
       prismaErrorHandler(e);
     }
@@ -56,10 +63,8 @@ router
       subject: { applicationId },
     } = ctx.state;
     try {
-      ctx.body = await updateRole(
-        Number(ctx.params.id),
-        ctx.request.body,
-        applicationId
+      ctx.body = itemOfEnumerable(
+        await updateRole(Number(ctx.params.id), ctx.request.body, applicationId)
       );
     } catch (e) {
       prismaErrorHandler(e);
@@ -84,6 +89,29 @@ router
   .delete('/:applicationName/roleInherit/:id/:inheritTo', async (ctx) => {
     const { id, inheritTo } = ctx.params;
     ctx.body = await deleteInheritRole(Number(id), Number(inheritTo));
+  });
+
+type GrantRoleOn =
+  | {
+      user: Array<number>;
+    }
+  | { group: Array<number> };
+
+router
+  .put('/:applicationName/grantRole/:id', body(), async (ctx) => {
+    const payload = ctx.request.body as GrantRoleOn;
+    ctx.body = await grantRole(Number(ctx.params.id), payload);
+  })
+  .patch('/:applicationName/grantRole/:id', body(), async (ctx) => {
+    const method = requestMethod(ctx);
+    const payload = ctx.request.body as GrantRoleOn;
+    if (method.toLowerCase() === 'delete') {
+      ctx.body = await revokeRole(Number(ctx.params.id), payload);
+      return;
+    }
+    throw new Error(
+      `The method ${method} is not supported. Only delete is supported`
+    );
   });
 
 router.get('/:applicationName/userIdentities', async (ctx) => {

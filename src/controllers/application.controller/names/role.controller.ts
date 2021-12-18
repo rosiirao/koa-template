@@ -9,6 +9,10 @@ import {
   find,
   inheritToById,
   revokeInherit,
+  assignUser,
+  revokeUser,
+  assignGroup,
+  revokeGroup,
 } from '../../../query/application/names.query/role.query';
 
 export async function getUserRoles(applicationId: number, userId: number) {
@@ -62,4 +66,22 @@ export function inheritRole(id: number, inheritTo: number) {
 
 export function deleteInheritRole(id: number, inheritTo: number) {
   return revokeInherit(id, inheritTo);
+}
+
+export function grantRole(
+  id: number,
+  payload: { user: Array<number> } | { group: Array<number> }
+) {
+  if ('user' in payload) return assignUser(id, payload.user);
+  if ('group' in payload) return assignGroup(id, payload.group);
+  return;
+}
+
+export function revokeRole(
+  id: number,
+  payload: { user: Array<number> } | { group: Array<number> }
+) {
+  if ('user' in payload) return revokeUser(id, payload.user);
+  if ('group' in payload) return revokeGroup(id, payload.group);
+  return;
 }

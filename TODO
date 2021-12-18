@@ -13,10 +13,10 @@
       [x] Modify role
       [X] Assign role on role
       [X] Revoke role on role
-      [ ] Assign role on user
-      [ ] Revoke role on user
-      [ ] Assign role on group
-      [ ] Revoke role on group
+      [X] Assign role on user
+      [x] Revoke role on user
+      [x] Assign role on group
+      [x] Revoke role on group
     - privilege
       [ ] Get privileges of application
       [ ] Grant on Role 

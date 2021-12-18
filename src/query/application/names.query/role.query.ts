@@ -3,11 +3,10 @@ import prisma from '../../client';
 import { enumerableFlat, PageOption } from '../../query.shared';
 import { DEFAULT_ROW_COUNT, queryInput, verifyName } from '../../query.shared';
 
-const roleSelector = {
+const roleSelector: Prisma.RoleSelect = {
   name: true,
-  PrivilegeAssignment: true,
-  inherit: true,
-  assignee: true,
+  Privilege: true,
+  assignor: true,
 };
 
 export const create = (applicationId: number, data: { name: string }) => {
@@ -26,10 +25,14 @@ export const create = (applicationId: number, data: { name: string }) => {
 };
 
 export function find(id: number, applicationId?: number) {
-  return prisma.role.findFirst({
-    where: { id, ...queryInput('applicationId', applicationId) },
-    select: roleSelector,
-  });
+  if (applicationId === undefined)
+    return prisma.role.findFirst({ where: { id }, select: roleSelector });
+
+  return prisma.application
+    .findUnique({
+      where: { id: applicationId },
+    })
+    .Role({ where: { id }, select: roleSelector });
 }
 
 export function update(
@@ -38,22 +41,34 @@ export function update(
   applicationId?: number
 ) {
   verifyName(data.name);
-  return prisma.role.update({
-    where: { id, ...queryInput('applicationId', applicationId) },
+  const updateArgs: Parameters<typeof prisma.role.update>[0] = {
+    where: { id },
     data,
-  });
+  };
+  if (applicationId === undefined) return prisma.role.update(updateArgs);
+  return prisma.application
+    .update({
+      where: {
+        id: applicationId,
+      },
+      data: {
+        Role: {
+          update: updateArgs,
+        },
+      },
+    })
+    .Role({ where: { id } });
 }
 
 export function remove(id: number, applicationId?: number) {
-  return prisma.role.delete({
-    where: {
-      id,
-      ...queryInput('applicationId', applicationId),
-    },
+  if (applicationId === undefined) return prisma.role.delete({ where: { id } });
+  return prisma.application.update({
+    where: { id: applicationId },
+    data: { Role: { delete: { id } } },
   });
 }
 
-export const createMany = async (
+export const createMany = (
   role: Array<{
     name: string;
     applicationId: number;
@@ -70,7 +85,7 @@ export const createMany = async (
 
 export const createInherit = async (
   data: Prisma.Enumerable<{
-    inheritId: number;
+    assignorId: number;
     roleId: number;
   }>
 ): Promise<Prisma.BatchPayload> => {
@@ -92,7 +107,7 @@ export const inheritTo = async (
       applicationId,
       assignee: {
         none: {
-          inherit: {
+          assignor: {
             name: inheritTo,
           },
         },
@@ -110,9 +125,9 @@ export const inheritTo = async (
       },
     },
     data: {
-      inherit: {
+      assignor: {
         createMany: {
-          data: assignee.map(({ id }) => ({ roleId: id })),
+          data: assignee.map(({ id }) => ({ assignorId: id })),
         },
       },
     },
@@ -126,11 +141,7 @@ export function inheritToById(id: number, inheritTo: number) {
       id,
     },
     data: {
-      assignee: {
-        create: {
-          inheritId: inheritTo,
-        },
-      },
+      assignor: { create: { assignorId: inheritTo } },
     },
     select: roleSelector,
   });
@@ -142,8 +153,8 @@ export function revokeInherit(id: number, inheritTo: number) {
     data: {
       assignee: {
         delete: {
-          roleId_inheritId: {
-            inheritId: inheritTo,
+          roleId_assignorId: {
+            assignorId: inheritTo,
             roleId: id,
           },
         },
@@ -174,6 +185,18 @@ export function assignUser(
   });
 }
 
+export function revokeUser(
+  roleId: number,
+  userId: Prisma.Enumerable<number>
+): PrismaPromise<Prisma.BatchPayload> {
+  return prisma.roleUserAssignment.deleteMany({
+    where: {
+      roleId,
+      userId: { in: enumerableFlat(userId) },
+    },
+  });
+}
+
 export function assignGroup(
   roleId: number,
   groupId: Prisma.Enumerable<number>
@@ -181,6 +204,18 @@ export function assignGroup(
   return prisma.roleGroupAssignment.createMany({
     data: enumerableFlat(groupId).map((groupId) => ({ groupId, roleId })),
     skipDuplicates: true,
+  });
+}
+
+export function revokeGroup(
+  roleId: number,
+  groupId: Prisma.Enumerable<number>
+): PrismaPromise<Prisma.BatchPayload> {
+  return prisma.roleGroupAssignment.deleteMany({
+    where: {
+      roleId,
+      groupId: { in: enumerableFlat(groupId) },
+    },
   });
 }
 
@@ -201,10 +236,7 @@ export async function listRolesOfUser(
       id: true,
     },
   });
-  return await listRolesInherited(
-    applicationId,
-    roleFind.map(({ id }) => id)
-  );
+  return await listRolesInherited(roleFind.map(({ id }) => id));
 }
 
 export async function listRolesOfGroup(
@@ -224,10 +256,7 @@ export async function listRolesOfGroup(
       id: true,
     },
   });
-  return await listRolesInherited(
-    applicationId,
-    roleFind.map(({ id }) => id)
-  );
+  return await listRolesInherited(roleFind.map(({ id }) => id));
 }
 
 export async function listRolesOfGroups(
@@ -250,13 +279,10 @@ export async function listRolesOfGroups(
       id: true,
     },
   });
-  return await listRolesInherited(
-    applicationId,
-    roleFind.map(({ id }) => id)
-  );
+  return await listRolesInherited(roleFind.map(({ id }) => id));
 }
 
-async function listRolesInherited(applicationId: number, roles: Array<number>) {
+async function listRolesInherited(roles: Array<number>) {
   const role = new Set(roles);
   let currentRole = [...role];
 
@@ -272,23 +298,20 @@ async function listRolesInherited(applicationId: number, roles: Array<number>) {
         roleId: {
           in: currentRole,
         },
-        inherit: {
-          applicationId,
-        },
       },
       select: {
-        inheritId: true,
+        assignorId: true,
       },
     });
     currentRole = [
-      ...new Set(inherit.map(({ inheritId }) => inheritId)),
+      ...new Set(inherit.map(({ assignorId }) => assignorId)),
     ].filter(filterAndAppend);
   }
   return role;
 }
 
-export async function listRoleInherited(applicationId: number, roleId: number) {
-  return listRolesInherited(applicationId, [roleId]);
+export async function listRoleInherited(roleId: number) {
+  return listRolesInherited([roleId]);
 }
 
 export function listRoles(

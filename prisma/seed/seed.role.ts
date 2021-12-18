@@ -1,8 +1,8 @@
-import { Application, Prisma } from '@prisma/client';
+import { Application, Prisma, Role } from '@prisma/client';
 import {
   createMany as createRole,
   inheritTo,
-} from '../../src/query/application/role.query';
+} from '../../src/query/application/names.query/role.query';
 import {
   createApplication,
   findUnique as findApplication,
@@ -26,7 +26,7 @@ const seedRootApp = () => {
 export const getApplication = async (): Promise<Application> =>
   (await findApplication({ name: APP_NAME })) ?? (await seedRootApp());
 
-export const seedRole = async (): Promise<Prisma.BatchPayload> => {
+export const seedRole = async (): Promise<Role[]> => {
   const role = roleHierarchyList(50);
   const application = await getApplication();
 

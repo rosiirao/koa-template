@@ -7,6 +7,9 @@ import { listGroupsOfUser } from '../../query/group.query';
 import { IIdentityState, AuthorizedState } from '../../app';
 import { listPrivilegeAssignments } from '../../query/application/privilege.query';
 import { findUnique } from '../../query/application/application.query';
+import { requestMethod } from '../shared.controller';
+
+export { requestMethod };
 
 /**
  * Get the authorized state to the application
@@ -63,13 +66,13 @@ export async function authorizeApplicationState(
 
 export async function loadApplicationByParam(
   applicationName: string,
-  ctx: Koa.ParameterizedContext<AuthorizedState>,
+  ctx: Router.RouterContext<AuthorizedState>,
   next: Koa.Next
 ) {
   const applicationState = await authorizeApplicationState(
     applicationName,
     ctx.state,
-    ctx.method
+    requestMethod(ctx)
   );
   ctx.state = {
     ...ctx.state,
@@ -210,9 +213,9 @@ export async function getPrivileges(
   const identityKeys: T[] = ['User', 'Group', 'Role'];
 
   const assignmentsByKey = {
-    Role: privilegeAssignments?.Role.map(({ id, PrivilegeAssignment }) => ({
+    Role: privilegeAssignments?.Role.map(({ id, Privilege }) => ({
       id,
-      privilege: PrivilegeAssignment.map(({ privilege }) => privilege),
+      privilege: Privilege.map(({ privilege }) => privilege),
     })),
     Group: privilegeAssignments?.PrivilegeGroupAssignment.map(
       ({ groupId: id, privilege }) => ({ id, privilege: [privilege] })
@@ -305,11 +308,16 @@ function getSubjectPrivilege(requestMethod: Router.RouterContext['method']) {
     GET: Privilege.READ_RESOURCE,
     POST: Privilege.CREATE_RESOURCE,
     PUT: Privilege.MODIFY_RESOURCE,
-    PATCH: Privilege.MODIFY_RESOURCE,
     DELETE: Privilege.DELETE_RESOURCE,
     ALL: Privilege.NONE,
     '*': Privilege.NONE,
   } as Record<string, Privilege>;
+
+  if (requestMethod === 'PATCH')
+    throw new Error(
+      'The PATCH method is not invalid. ' +
+        'An rest operation http method must be described in HTTP X-HTTP-METHOD header if it is an http patch request'
+    );
   return (
     privilegeOnRequestMethod[requestMethod] ?? privilegeOnRequestMethod['*']
   );

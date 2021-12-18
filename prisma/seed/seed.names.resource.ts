@@ -50,7 +50,7 @@ export async function registerNamesResource() {
 
   prisma.$transaction(
     groups.map(({ id }) =>
-      prisma.namesResourceMap.create({
+      prisma.namesResource.create({
         data: {
           group: {
             connect: { id },
@@ -61,7 +61,7 @@ export async function registerNamesResource() {
   );
   prisma.$transaction(
     roles.map(({ id }) =>
-      prisma.namesResourceMap.create({
+      prisma.namesResource.create({
         data: {
           role: {
             connect: { id },
