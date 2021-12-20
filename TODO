@@ -11,20 +11,20 @@
       [x] Add role
       [x] Remove role
       [x] Modify role
-      [X] Assign role on role
-      [X] Revoke role on role
-      [X] Assign role on user
+      [x] Assign role on role
+      [x] Revoke role on role
+      [x] Assign role on user
       [x] Revoke role on user
       [x] Assign role on group
       [x] Revoke role on group
     - privilege
-      [ ] Get privileges of application
-      [ ] Grant on Role 
-      [ ] Revoke on Role 
-      [ ] Grant on Group 
-      [ ] Revoke on Group 
-      [ ] Grant on User 
-      [ ] Revoke on User 
+      [x] Get privileges of application
+      [x] Grant on Role 
+      [x] Revoke on Role 
+      [x] Grant on Group 
+      [x] Revoke on Group 
+      [x] Grant on User 
+      [x] Revoke on User 
   - Group
   - User
   - Resource
@@ -41,5 +41,5 @@
   [ ] Modify the privileges of *administrator* role 
   [ ] Add Application *Test* with the role *administrator*
 - Form validation solution
-  [ ] A unity form validation solution
+  [ ] A utility form validation solution
   

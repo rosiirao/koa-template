@@ -135,32 +135,50 @@ export const inheritTo = async (
   });
 };
 
-export function inheritToById(id: number, inheritTo: number) {
-  return prisma.role.update({
-    where: {
-      id,
-    },
+export function inheritToById(
+  applicationId: number,
+  roleId: number,
+  inheritTo: number
+) {
+  return prisma.application.update({
+    where: { id: applicationId },
     data: {
-      assignor: { create: { assignorId: inheritTo } },
-    },
-    select: roleSelector,
-  });
-}
-
-export function revokeInherit(id: number, inheritTo: number) {
-  return prisma.role.update({
-    where: { id },
-    data: {
-      assignee: {
-        delete: {
-          roleId_assignorId: {
-            assignorId: inheritTo,
-            roleId: id,
+      Role: {
+        update: {
+          where: { id: roleId },
+          data: {
+            assignor: { create: { assignorId: inheritTo } },
           },
         },
       },
     },
-    select: roleSelector,
+  });
+}
+
+export function revokeInherit(
+  applicationId: number,
+  roleId: number,
+  inheritTo: number
+) {
+  return prisma.application.update({
+    where: { id: applicationId },
+    data: {
+      Role: {
+        update: {
+          where: { id: roleId },
+          data: {
+            assignor: {
+              delete: {
+                roleId_assignorId: {
+                  roleId,
+                  assignorId: inheritTo,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   });
 }
 

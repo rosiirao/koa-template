@@ -1,4 +1,9 @@
-import { listPrivilegeAssignments } from '../../query/application/privilege.query';
+import {
+  EffectiveAssignee,
+  listPrivilegeAssignments,
+  modifyPrivilege,
+  Privilege,
+} from '../../query/application/privilege.query';
 import {
   addApplication,
   findUnique,
@@ -41,4 +46,12 @@ export function deleteApplication(id_name: { name: string } | { id: number }) {
 
 export function getPrivileges(applicationId: number) {
   return listPrivilegeAssignments(applicationId);
+}
+
+export function updatePrivilege(
+  applicationId: number,
+  assignee: EffectiveAssignee,
+  privilege: Array<Privilege>
+) {
+  return modifyPrivilege(applicationId, assignee, privilege);
 }

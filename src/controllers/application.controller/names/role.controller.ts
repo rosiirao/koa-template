@@ -60,12 +60,20 @@ export function updateRole(
   return update(id, data, applicationId);
 }
 
-export function inheritRole(id: number, inheritTo: number) {
-  return inheritToById(id, inheritTo);
+export function inheritRole(
+  applicationId: number,
+  roleId: number,
+  inheritTo: number
+) {
+  return inheritToById(applicationId, roleId, inheritTo);
 }
 
-export function deleteInheritRole(id: number, inheritTo: number) {
-  return revokeInherit(id, inheritTo);
+export function deleteInheritRole(
+  applicationId: number,
+  roleId: number,
+  inheritTo: number
+) {
+  return revokeInherit(applicationId, roleId, inheritTo);
 }
 
 export function grantRole(

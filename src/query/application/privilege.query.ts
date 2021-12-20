@@ -5,7 +5,7 @@ import { enumerableFlat } from '../query.shared';
 
 export { Privilege } from '@prisma/client';
 
-type EffectiveAssignee = {
+export type EffectiveAssignee = {
   user?: Prisma.Enumerable<number>;
   group?: Prisma.Enumerable<number>;
   role?: Prisma.Enumerable<number>;
@@ -67,6 +67,77 @@ export async function assignPrivilege(
     (acc_1, { count }) => ({ count: count + acc_1.count }),
     { count: 0 }
   );
+}
+
+export async function modifyPrivilege(
+  applicationId: number,
+  assignee: EffectiveAssignee,
+  priv: Prisma.Enumerable<Privilege>
+) {
+  const { user, group, role } = {
+    user: enumerableFlat(assignee.user),
+    group: enumerableFlat(assignee.group),
+    role: enumerableFlat(assignee.role),
+  };
+  const privilege = enumerableFlat(priv);
+
+  type K = 'userId' | 'groupId' | 'roleId';
+  type PrivCreateInput = { [key in K]: number } & { privilege: Privilege };
+  function assemblePrivilege(idList: Array<number>, idName: K) {
+    return idList.reduce<Array<PrivCreateInput>>((acc, id) => {
+      privilege.forEach((p) =>
+        acc.push({ [idName]: id, privilege: p } as PrivCreateInput)
+      );
+      return acc;
+    }, []);
+  }
+
+  function createManyInput(idList: Array<number>, idName: K) {
+    return {
+      skipDuplicates: true,
+      data: assemblePrivilege(idList, idName),
+    };
+  }
+
+  const update = [];
+  if (enumerableFlat(user).length > 0 || enumerableFlat(group).length > 0) {
+    update.push(
+      prisma.application.update({
+        where: { id: applicationId },
+        data: {
+          PrivilegeUserAssignment: {
+            deleteMany: {
+              userId: { in: user },
+              privilege: { notIn: privilege },
+            },
+            createMany: createManyInput(user, 'userId'),
+          },
+          PrivilegeGroupAssignment: {
+            deleteMany: {
+              groupId: { in: group },
+              privilege: { notIn: privilege },
+            },
+            createMany: createManyInput(group, 'groupId'),
+          },
+        },
+      })
+    );
+  }
+  if (role.length > 0) {
+    update.push(
+      prisma.privilegeRoleAssignment.deleteMany({
+        where: {
+          role: {
+            applicationId,
+            id: { in: role },
+          },
+          privilege: { notIn: privilege },
+        },
+      }),
+      prisma.privilegeRoleAssignment.createMany(createManyInput(role, 'roleId'))
+    );
+  }
+  return prisma.$transaction(update);
 }
 
 export async function listPrivilegeAssignments(applicationId: number) {

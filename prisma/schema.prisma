@@ -190,7 +190,7 @@ model Role {
   Privilege     PrivilegeRoleAssignment[]
 
   assignee     RoleInherit[]               @relation("assignor")
-  assignor    RoleInherit[]               @relation("assignee")
+  assignor     RoleInherit[]               @relation("assignee")
   user         RoleUserAssignment[]
   group        RoleGroupAssignment[]
   roleResource RoleResourceAccessControl[]

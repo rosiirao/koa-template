@@ -17,6 +17,7 @@ import { authorizeParamRoute } from '../application.authorize';
 import { prismaErrorHandler } from '../shared.route';
 import { itemOfEnumerable } from '../../query/query.shared';
 import { requestMethod } from '../../controllers/shared.controller';
+import { updatePrivilege } from '../../controllers/application.controller/application.controller';
 
 const router = authorizeParamRoute(
   new Router({
@@ -84,11 +85,21 @@ router
 router
   .put('/:applicationName/roleInherit/:id/:inheritTo', async (ctx) => {
     const { id, inheritTo } = ctx.params;
-    ctx.body = await inheritRole(Number(id), Number(inheritTo));
+    const {
+      subject: { applicationId },
+    } = ctx.state;
+    ctx.body = await inheritRole(applicationId, Number(id), Number(inheritTo));
   })
   .delete('/:applicationName/roleInherit/:id/:inheritTo', async (ctx) => {
     const { id, inheritTo } = ctx.params;
-    ctx.body = await deleteInheritRole(Number(id), Number(inheritTo));
+    const {
+      subject: { applicationId },
+    } = ctx.state;
+    ctx.body = await deleteInheritRole(
+      applicationId,
+      Number(id),
+      Number(inheritTo)
+    );
   });
 
 type GrantRoleOn =
@@ -113,6 +124,15 @@ router
       `The method ${method} is not supported. Only delete is supported`
     );
   });
+
+router.put('/:applicationName/privilege', body(), async (ctx) => {
+  const { assignee, privilege } = ctx.request.body;
+  const {
+    subject: { applicationId },
+  } = ctx.state;
+  await updatePrivilege(applicationId, assignee, privilege);
+  ctx.body = undefined;
+});
 
 router.get('/:applicationName/userIdentities', async (ctx) => {
   const { user, identities, privilege, subject } = ctx.state;
