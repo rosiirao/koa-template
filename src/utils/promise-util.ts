@@ -74,7 +74,7 @@ export function wrap<F extends PromiseFunction<F>, E = Error>(
  * @returns
  */
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export function wrap<F extends PromiseFunction<F> | Promiser<F>, E = Error>(
+export function wrap<F extends PromiseFunction<F> | Promise<F>, E = Error>(
   thenable: F
 ) {
   // return thenable instanceof Function
@@ -84,7 +84,7 @@ export function wrap<F extends PromiseFunction<F> | Promiser<F>, E = Error>(
 }
 
 const isPromiseFunction = <F>(
-  f: PromiseFunction<F> | Promiser<F>
+  f: PromiseFunction<F> | Promise<F>
 ): f is PromiseFunction<F> => {
   return typeof f === 'function';
 };

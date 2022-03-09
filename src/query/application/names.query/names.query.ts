@@ -36,13 +36,13 @@ export async function listNames(
             [query]: null,
           },
         };
-  const resource = await prisma.namesResource.findMany({
+  const resource = (await prisma.namesResource.findMany({
     where: {
       ...filterType,
     },
     ...listQueryCriteria(count, skip, start, orderBy),
     ...typeSelector(query),
-  });
+  })) as Array<Record<NonNullable<typeof query>, unknown>>;
   return query !== undefined ? resource.map((v) => v[query]) : resource;
 }
 

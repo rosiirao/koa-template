@@ -26,6 +26,27 @@ const startApp = (): Koa => {
     await next();
   });
 
+  /**
+   * An example for testing xhr progress
+   */
+  app.use(async (ctx, next) => {
+    if (ctx.path === '/progress') {
+      ctx.res.writeHead(200, {
+        'Content-Length': Buffer.byteLength('中', 'utf-8') * 5000,
+        'Content-Type': 'text/plain;charset=utf-8',
+      });
+      for (let i = 0; i < 5000; i++) {
+        ctx.res.write('中', 'utf-8');
+        if (i % 1000 === 0) {
+          await new Promise((r) => setTimeout(r, 100));
+        }
+      }
+      ctx.res.end();
+      return;
+    }
+    await next();
+  });
+
   app.use(routes);
   return app;
 };
