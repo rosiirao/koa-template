@@ -12,14 +12,29 @@ type Conf = {
 
 const defaultPath = 'files';
 
-const conf: Conf | undefined = config.has('services.files')
+const conf: Conf | Array<Conf> | undefined = config.has('services.files')
   ? config.get('services.files')
   : undefined;
 
-const filesService = (conf?: Conf) => {
+const filesService = (conf?: Conf | Array<Conf>) => {
   // if ((conf?.root ?? '') === '') return;
   if (conf === undefined) return;
 
+  if (!Array.isArray(conf)) {
+    const router = fileRoute(conf);
+    return compose([router.routes(), router.allowedMethods()]);
+  }
+
+  return compose(
+    conf.reduce<Array<Router.Middleware>>((acc, c) => {
+      const router = fileRoute(c);
+      acc.push(router.routes(), router.allowedMethods());
+      return acc;
+    }, [])
+  );
+};
+
+function fileRoute(conf: Conf) {
   const publicPath = conf.path ?? defaultPath;
   const router = new Router({
     prefix:
@@ -30,7 +45,7 @@ const filesService = (conf?: Conf) => {
   router.get('/:path+', async (ctx, next) => {
     await filesServe('/' + ctx.params.path)(ctx, next);
   });
-  return compose([router.routes(), router.allowedMethods()]);
-};
+  return router;
+}
 
 export default filesService(conf);

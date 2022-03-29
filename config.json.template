@@ -21,7 +21,7 @@
         "LOG_MAX_FILES": "14d"
     },
     "services":{
-        "files": {
+        "files": {                // The array can be used to serve multiple paths
             "path": "/static",    // Can't be empty string, default is "/files"
             "root": "public"      // The root static file path, if empty the services will not work
         }
