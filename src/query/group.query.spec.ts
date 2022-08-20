@@ -1,4 +1,4 @@
-import { randomArbitrary } from '../utils';
+import { randomArbitrary } from '../utils/index.js';
 import {
   create,
   createMany,

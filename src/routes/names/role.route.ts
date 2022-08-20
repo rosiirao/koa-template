@@ -1,7 +1,7 @@
 import Router from '@koa/router';
 import body from 'koa-body';
 import compose from 'koa-compose';
-import { jsonStringify } from '../../utils';
+import { jsonStringify } from '../../utils/index.js';
 import {
   createRole,
   deleteInheritRole,
@@ -12,12 +12,12 @@ import {
   inheritRole,
   updateRole,
   grantRole,
-} from '../../controllers/application.controller/names/role.controller';
-import { authorizeParamRoute } from '../application.authorize';
-import { prismaErrorHandler } from '../shared.route';
-import { itemOfEnumerable } from '../../query/query.shared';
-import { requestMethod } from '../../controllers/shared.controller';
-import { updatePrivilege } from '../../controllers/application.controller/application.controller';
+} from '../../controllers/application.controller/names/role.controller.js';
+import { authorizeParamRoute } from '../application.authorize.js';
+import { prismaErrorHandler } from '../shared.route.js';
+import { itemOfEnumerable } from '../../query/query.shared.js';
+import { requestMethod } from '../../controllers/shared.controller.js';
+import { updatePrivilege } from '../../controllers/application.controller/application.controller.js';
 
 const router = authorizeParamRoute(
   new Router({

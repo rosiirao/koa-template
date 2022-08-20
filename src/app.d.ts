@@ -1,4 +1,4 @@
-import { Privilege } from '.prisma/client';
+import type { Privilege } from '.prisma/client';
 
 export interface IUserState {
   user: Partial<{

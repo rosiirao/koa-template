@@ -1,4 +1,4 @@
-import prisma from '../../../query/client';
+import prisma from '../../../query/client.js';
 import { Group, Prisma, Role, User } from '@prisma/client';
 
 import {
@@ -7,7 +7,7 @@ import {
   orderByInput,
   PageOption,
   queryInput,
-} from '../../../query/query.shared';
+} from '../../../query/query.shared.js';
 
 const typeSelector = (query?: 'user' | 'group' | 'role') => ({
   select: {

@@ -1,8 +1,8 @@
-import api from './api';
-import auth from './auth.route';
-import files from './files';
-import names from './names';
-import test from './test.router';
+import api from './api.js';
+import auth from './auth.route.js';
+import files from './files.js';
+import names from './names/index.js';
+import test from './test.router.js';
 
 import Koa from 'koa';
 import compose from 'koa-compose';

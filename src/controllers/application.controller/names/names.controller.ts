@@ -1,8 +1,8 @@
 import {
   queryName,
   listNames,
-} from '../../../query/application/names.query/names.query';
-import { ISubject } from '../../../app';
+} from '../../../query/application/names.query/names.query.js';
+import { ISubject } from '../../../app.js';
 
 export const findNames = (
   subject: ISubject['subject'],

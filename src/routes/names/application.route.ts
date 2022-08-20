@@ -7,10 +7,13 @@ import {
   deleteApplication,
   getApplication,
   updateApplication,
-} from '../../controllers/application.controller/application.controller';
-import { authorizeApplication, authorizeRoute } from '../application.authorize';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
-import { prismaErrorHandler } from '../shared.route';
+} from '../../controllers/application.controller/application.controller.js';
+import {
+  authorizeApplication,
+  authorizeRoute,
+} from '../application.authorize.js';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/index.js';
+import { prismaErrorHandler } from '../shared.route.js';
 
 const router = authorizeRoute(
   new Router({

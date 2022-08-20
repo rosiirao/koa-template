@@ -1,4 +1,4 @@
-import createPromise from './promise-util';
+import createPromise from './promise-util.js';
 import cluster from 'cluster';
 
 export interface Message<T> {

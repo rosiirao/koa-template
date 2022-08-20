@@ -1,11 +1,11 @@
 import Router from '@koa/router';
 import createHttpError from 'http-errors';
 import compose from 'koa-compose';
-import { findACL } from '../../query/acl.query/names.acl.query';
-import { AuthorizedState } from '../../app';
-import { authorizeRoute } from '../application.authorize';
-import { itemOfEnumerable, queryInput } from '../../query/query.shared';
-import { findNames } from '../../controllers/application.controller/names';
+import { findACL } from '../../query/acl.query/names.acl.query.js';
+import { AuthorizedState } from '../../app.js';
+import { authorizeRoute } from '../application.authorize.js';
+import { itemOfEnumerable, queryInput } from '../../query/query.shared.js';
+import { findNames } from '../../controllers/application.controller/names/index.js';
 
 const router = authorizeRoute(
   new Router<AuthorizedState>(),

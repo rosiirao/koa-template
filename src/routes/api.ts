@@ -1,6 +1,6 @@
 import Router from '@koa/router';
 import compose from 'koa-compose';
-import { readyz, healthz, version } from '../controllers/kubeController';
+import { readyz, healthz, version } from '../controllers/kubeController.js';
 
 const router = new Router({
   prefix: '/api',

@@ -1,6 +1,6 @@
 // import { IIdentityState } from '../../../app';
 
-import { Privilege } from '.prisma/client';
+import { Privilege } from '@prisma/client';
 
 export function listPrivilegeAssignments() {
   // applicationId: number,

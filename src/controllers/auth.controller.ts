@@ -26,7 +26,7 @@ const { PUBLIC_KEY, PRIVATE_KEY, JWT_URN }: Conf = config.has('services.auth')
 const JWT_URN_PREFIX = JWT_URN ? `${JWT_URN}:` : '';
 
 import createHttpError from 'http-errors';
-import { corsHeaders } from './cors';
+import { corsHeaders } from './cors.js';
 import fs from 'fs';
 import crypto from 'crypto';
 
@@ -54,7 +54,7 @@ import {
   findUnique,
   findUserCredential,
   updateUserCredential,
-} from '../query/user.query';
+} from '../query/user.query.js';
 
 export const register: Router.Middleware = async (ctx): Promise<void> => {
   const { password, ...rest } = ctx.request.body;
@@ -203,8 +203,8 @@ export const refreshToken: Router.Middleware<IUserState> = async (ctx) => {
   await auth(ctx, { id: credential!.userId });
 };
 
-import { clusterCache } from '../cache';
-import { IUserState } from '../app';
+import { clusterCache } from '../cache/index.js';
+import { IUserState } from '../app.js';
 import compose from 'koa-compose';
 
 const challenge_ttl = 10 * 60_000;

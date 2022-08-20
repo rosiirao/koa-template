@@ -3,14 +3,14 @@ import {
   listPrivilegeAssignments,
   modifyPrivilege,
   Privilege,
-} from '../../query/application/privilege.query';
+} from '../../query/application/privilege.query.js';
 import {
   addApplication,
   findUnique,
   listApplication,
   modifyApplication,
   removeApplication,
-} from '../../query/application/application.query';
+} from '../../query/application/application.query.js';
 
 export { listApplication };
 

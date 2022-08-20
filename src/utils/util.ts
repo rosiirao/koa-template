@@ -1,5 +1,5 @@
 import { customAlphabet } from 'nanoid';
-import createPromise from './promise-util';
+import createPromise from './promise-util.js';
 
 const idMaker = (() => {
   const g = (function* () {

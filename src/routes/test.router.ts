@@ -1,8 +1,8 @@
 import Router from '@koa/router';
 import createHttpError from 'http-errors';
 import compose from 'koa-compose';
-import { getGroupFullName, getGroupMember } from '../query/group.query';
-import cache from '../controllers/cache.controller';
+import { getGroupFullName, getGroupMember } from '../query/group.query.js';
+import cache from '../controllers/cache.controller.js';
 
 const router = new Router({
   prefix: '/test',

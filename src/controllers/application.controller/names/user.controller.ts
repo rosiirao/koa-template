@@ -1,10 +1,10 @@
-import { User } from '.prisma/client';
-import { ISubject, IIdentityState } from '../../../app';
+import type { User } from '@prisma/client';
+import type { ISubject, IIdentityState } from '../../../app.js';
 import {
   listUsers as queryUsers,
   findUnique as queryUser,
   updateUser as patchUser,
-} from '../../../query/user.query';
+} from '../../../query/user.query.js';
 
 export const findUser = async (
   subject: ISubject['subject'],

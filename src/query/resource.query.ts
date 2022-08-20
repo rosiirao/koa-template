@@ -1,7 +1,7 @@
-import prisma from './client';
-import { Prisma } from '.prisma/client';
-import { queryInput, orderByInput } from './query.shared';
-import { OrderByQuery } from './query.shared';
+import prisma from './client.js';
+import { Prisma } from '@prisma/client';
+import { queryInput, orderByInput } from './query.shared.js';
+import { OrderByQuery } from './query.shared.js';
 
 type ResourceAccessControl = Partial<Record<'authors' | 'readers', number[]>>;
 type AccessControlFields = {
@@ -228,4 +228,64 @@ export const updateResources = (
     },
     select: resourceACLSelector,
   });
+};
+
+export const removeResource = async (
+  id: number,
+  user?: { id: number; role: number[]; group: number[] }
+): Promise<boolean> => {
+  if (user === undefined) {
+    await prisma.resource.delete({
+      where: { id },
+    });
+    return true;
+  }
+  const queryByGroup: Prisma.ResourceWhereInput | undefined =
+    user.group.length === 0
+      ? undefined
+      : {
+          GroupACL: {
+            some: {
+              author: true,
+              groupId: {
+                in: user?.group ?? [],
+              },
+            },
+          },
+        };
+
+  const queryByUser: Prisma.ResourceWhereInput | undefined =
+    user.id === undefined
+      ? undefined
+      : {
+          UserACL: {
+            some: { id: user.id },
+          },
+        };
+
+  const queryByRole: Prisma.ResourceWhereInput | undefined =
+    user !== undefined && user.role.length === 0
+      ? undefined
+      : {
+          RoleACL: {
+            some: {
+              author: true,
+              roleId: {
+                in: user.role,
+              },
+            },
+          },
+        };
+  const resource = await prisma.resource.deleteMany({
+    where: {
+      id,
+      OR: [queryByGroup, queryByUser, queryByRole].filter(
+        (v) => v !== undefined
+      ) as Array<Prisma.ResourceWhereInput>,
+    },
+  });
+  if (resource.count === 0 && (await findResource(id)) !== undefined) {
+    return false;
+  }
+  return true;
 };

@@ -1,8 +1,8 @@
 import { Prisma, Group, User, PrismaPromise } from '@prisma/client';
 
-import { Element, ThenArg } from '../utils';
+import { Element, ThenArg } from '../utils/index.js';
 
-import prisma from './client';
+import prisma from './client.js';
 
 import {
   hierarchyByName,
@@ -12,7 +12,7 @@ import {
   enumerableIsEmpty,
   itemOfEnumerable,
   enumerableFlat,
-} from './query.shared';
+} from './query.shared.js';
 
 /**
  * The map of group's FullName and id

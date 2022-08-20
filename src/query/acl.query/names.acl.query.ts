@@ -1,5 +1,5 @@
-import prisma from '../client';
-import { resourceACLSelector } from '../resource.query';
+import prisma from '../client.js';
+import { resourceACLSelector } from '../resource.query.js';
 
 export function findACL(resourceId: number) {
   return prisma.namesResource

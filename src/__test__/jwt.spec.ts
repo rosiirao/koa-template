@@ -1,5 +1,3 @@
 describe('jose jwt test', () => {
-  it('jose sign and verify', async () => {
-    return true;
-  });
+  it.todo('jose sign and verify');
 });

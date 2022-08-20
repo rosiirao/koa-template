@@ -1,7 +1,7 @@
 import { Privilege } from '@prisma/client';
 import { Prisma } from '@prisma/client';
-import prisma from '../client';
-import { enumerableFlat } from '../query.shared';
+import prisma from '../client.js';
+import { enumerableFlat } from '../query.shared.js';
 
 export { Privilege } from '@prisma/client';
 

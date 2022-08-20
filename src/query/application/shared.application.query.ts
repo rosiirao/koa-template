@@ -1,4 +1,4 @@
-import { IIdentityState } from '../../app';
+import type { IIdentityState } from '../../app.js';
 
 const noRelationClause = { none: {} };
 

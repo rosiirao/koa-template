@@ -1,15 +1,16 @@
 import {
   createResource,
+  removeResource,
   findAllResources,
-  // findResource,
-  // findAllResourcesByUser,
   updateResources,
-} from './resource.query';
-import { listUser } from './user.query';
-import prisma from './client';
-import { nextId } from '../utils';
+} from './resource.query.js';
+import { listUsers } from './user.query.js';
+import prisma from './client.js';
+// import { nextId } from '../utils';
 
-describe.skip('resource query operation ', () => {
+const adminIdentities = { id: 1, role: [], group: [] } as const;
+
+describe('resource query operation ', () => {
   afterAll(() => {
     // restore all user-resource data
     return prisma.$disconnect();
@@ -19,44 +20,48 @@ describe.skip('resource query operation ', () => {
      * Set all users as readers and authors, then restore default state
      */
 
-    const users = await listUser(10, undefined, { orderBy: 'id', desc: true });
+    const users = await listUsers(
+      {
+        applicationId: 1,
+        identities: adminIdentities,
+      },
+      10,
+      undefined,
+      { orderBy: 'id', desc: true }
+    );
 
+    expect(users.length).toBeGreaterThan(0);
     if (users.length === 0) return;
-    let [res] = await findAllResources(1, undefined, 1, {
+    const [res] = await findAllResources(1, undefined, 1, {
       orderBy: 'id',
       desc: true,
     });
 
-    if (res === undefined) {
-      res = await createResource(nextId(), 0, { authors: [], readers: [] });
-    }
+    expect(res).not.toBe(undefined);
+    if (res === undefined) return;
 
-    const { id, userResource } = res;
+    const { id, UserACL } = res;
 
-    const { authors, readers } = userResource.reduce<{
-      authors: number[];
-      readers: number[];
-    }>(
-      (data, { userId, author, reader }) => {
+    const [authors, readers] = UserACL.reduce<
+      [authors: number[], readers: number[]]
+    >(
+      ([authors, readers], { userId, author, reader }) => {
         if (author) {
-          data.authors.push(userId);
+          authors.push(userId);
         }
         if (reader) {
-          data.readers.push(userId);
+          readers.push(userId);
         }
-        return data;
+        return [authors, readers];
       },
-      {
-        readers: [],
-        authors: [],
-      }
+      [[], []]
     );
 
     const newResource = await updateResources(id, {
       authors: users.map(({ id }) => id),
       readers: users.map(({ id }) => id),
     });
-    expect(newResource?.userResource).toEqual(
+    expect(newResource?.UserACL).toEqual(
       expect.arrayContaining(
         users.map(({ id }) => ({
           userId: id,
@@ -73,5 +78,22 @@ describe.skip('resource query operation ', () => {
       authors,
       readers,
     });
+  });
+
+  it('Create and delete resource', async () => {
+    const [res] = await findAllResources(1, undefined, 1, {
+      orderBy: 'id',
+      desc: true,
+    });
+    const id = res?.id ?? 1;
+    const created = await createResource(id, 1, { authors: [], readers: [] });
+    expect(created).not.toBe(undefined);
+    if (created === undefined) return;
+    expect(created.id).toBe(id);
+    const removed = await removeResource(id);
+    expect(removed).toBe(true);
+    if (!removed) {
+      console.warn(`Testing created resource ${id} is not be removed`);
+    }
   });
 });

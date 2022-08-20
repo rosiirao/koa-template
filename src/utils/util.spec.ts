@@ -1,4 +1,8 @@
-import { debounceAsyncExecutor, jsonStringify, randomArbitrary } from '.';
+import {
+  debounceAsyncExecutor,
+  jsonStringify,
+  randomArbitrary,
+} from './index.js';
 import { nextId, sliceMap, rangeList, randomCharacter } from './util';
 
 describe('util test', () => {

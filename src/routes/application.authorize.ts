@@ -5,9 +5,9 @@ import {
   loadApplicationByParam,
   loadResourceByParam,
   requestMethod,
-} from '../controllers/application.controller/authorize.controller';
-import { verifyAuthToken } from '../controllers/auth.controller';
-import { AuthorizedState } from '../app';
+} from '../controllers/application.controller/authorize.controller.js';
+import { verifyAuthToken } from '../controllers/auth.controller.js';
+import { AuthorizedState } from '../app.js';
 
 import Router from '@koa/router';
 import { match } from 'path-to-regexp';
@@ -39,7 +39,7 @@ export function authorizeParamRoute(
 /**
  * Authorize router with the optional application path parameter
  * It will assign the *IIdentityState*, and the *ISubject*, *IPrivilege* if the application path parameter is present, into *ctx.state*
- * @param root
+ * @param router
  * @param path The route path contains applicationName and optional resourceId param
  * @param findACL The function to get resource data including ACL data
  */

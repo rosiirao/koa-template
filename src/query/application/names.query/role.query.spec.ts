@@ -1,4 +1,4 @@
-import { listRoles } from './role.query';
+import { listRoles } from './role.query.js';
 
 describe('role query test', () => {
   it('list role with start cursor', async () => {

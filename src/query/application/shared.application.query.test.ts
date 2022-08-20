@@ -1,5 +1,5 @@
-import prisma from '../client';
-import { aclClause } from './shared.application.query';
+import prisma from '../client.js';
+import { aclClause } from './shared.application.query.js';
 
 describe('List resources with acl clause', () => {
   it('aclClause shared works', async () => {

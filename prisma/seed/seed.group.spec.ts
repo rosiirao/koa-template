@@ -1,4 +1,4 @@
-import { groupListReady } from './seed.group';
+import { groupListReady } from './seed.group.js';
 
 describe('seed group', () => {
   it('generate group names list works', () => {

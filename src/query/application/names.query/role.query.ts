@@ -1,7 +1,11 @@
 import { Prisma, PrismaPromise, Role } from '@prisma/client';
-import prisma from '../../client';
-import { enumerableFlat, PageOption } from '../../query.shared';
-import { DEFAULT_ROW_COUNT, queryInput, verifyName } from '../../query.shared';
+import prisma from '../../client.js';
+import { enumerableFlat, PageOption } from '../../query.shared.js';
+import {
+  DEFAULT_ROW_COUNT,
+  queryInput,
+  verifyName,
+} from '../../query.shared.js';
 
 const roleSelector: Prisma.RoleSelect = {
   name: true,

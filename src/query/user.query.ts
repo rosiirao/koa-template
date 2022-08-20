@@ -7,19 +7,19 @@ import {
   PrismaPromise,
 } from '@prisma/client';
 import createHttpError from 'http-errors';
-import { sliceMap } from '../utils';
+import { sliceMap } from '../utils/index.js';
 
-import prisma from './client';
+import prisma from './client.js';
 import {
   queryInput,
   orderByInput,
   DEFAULT_ROW_COUNT,
   listQueryCriteria,
-} from './query.shared';
-import { OrderByQuery } from './query.shared';
+} from './query.shared.js';
+import { OrderByQuery } from './query.shared.js';
 
-import { aclRelationClause } from './application/shared.application.query';
-import { IIdentityState } from '../app';
+import { aclRelationClause } from './application/shared.application.query.js';
+import type { IIdentityState } from '../app.js';
 
 type UserCreateInput = {
   email: string;
@@ -125,7 +125,7 @@ export function listUsers(
     'id'
   );
   const { skip = 1, start = 1 } = option;
-  const { applicationId, identities } = aclCriteria ?? {};
+  const { applicationId, identities } = aclCriteria;
   return prisma.user.findMany({
     include: {
       posts: true,

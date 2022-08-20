@@ -1,5 +1,5 @@
-import { wrap } from './promise-util';
-import createPromise from './promise-util';
+import { wrap } from './promise-util.js';
+import createPromise from './promise-util.js';
 
 describe('promise util', () => {
   test.each([

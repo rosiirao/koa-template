@@ -1,13 +1,13 @@
-import { Prisma, Privilege } from '.prisma/client';
+import { Prisma, Privilege } from '@prisma/client';
 import Router from '@koa/router';
 import createHttpError from 'http-errors';
 import Koa from 'koa';
-import { listRolesOfUser } from '../../query/application/names.query/role.query';
-import { listGroupsOfUser } from '../../query/group.query';
-import { IIdentityState, AuthorizedState } from '../../app';
-import { listPrivilegeAssignments } from '../../query/application/privilege.query';
-import { findUnique } from '../../query/application/application.query';
-import { requestMethod } from '../shared.controller';
+import { listRolesOfUser } from '../../query/application/names.query/role.query.js';
+import { listGroupsOfUser } from '../../query/group.query.js';
+import { listPrivilegeAssignments } from '../../query/application/privilege.query.js';
+import { findUnique } from '../../query/application/application.query.js';
+import { requestMethod } from '../shared.controller.js';
+import type { IIdentityState, AuthorizedState } from '../../app.js';
 
 export { requestMethod };
 

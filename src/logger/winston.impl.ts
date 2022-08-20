@@ -8,7 +8,7 @@ import DailyRotateFile, {
   DailyRotateFileTransportOptions,
 } from 'winston-daily-rotate-file';
 import path from 'path';
-import logConf from './config.logger';
+import logConf from './config.logger.js';
 import cluster from 'cluster';
 
 const { errors, printf, combine } = winston.format;

@@ -1,7 +1,7 @@
 import NodeCache from 'node-cache';
 
-import { nextId } from '../utils';
-import createPromise from '../utils/promise-util';
+import { nextId } from '../utils/index.js';
+import createPromise from '../utils/promise-util.js';
 
 import cluster from 'cluster';
 
@@ -38,7 +38,7 @@ import {
   publish,
   subscribe,
   subscribeWithId,
-} from '../utils';
+} from '../utils/index.js';
 
 interface CacheMessage extends Message<MessageOp<Cache>> {
   type: typeof MESSAGE_OP_CACHE;

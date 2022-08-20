@@ -1,6 +1,6 @@
 import createHttpError from 'http-errors';
 import Koa from 'koa';
-import { clusterCache } from '../cache';
+import { clusterCache } from '../cache/index.js';
 
 export const cache: Koa.Middleware = async (ctx, next): Promise<void> => {
   const query = new URLSearchParams(ctx.querystring);

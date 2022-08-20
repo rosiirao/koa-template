@@ -1,4 +1,4 @@
-import { hierarchyByName, queryInput } from './query.shared';
+import { hierarchyByName, queryInput } from './query.shared.js';
 
 describe('query lib shared test', () => {
   it('full name to hierarchy name array', () => {

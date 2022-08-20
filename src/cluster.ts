@@ -1,12 +1,12 @@
 import cluster from 'cluster';
-import startServer, { serverSite } from './server';
+import startServer, { serverSite } from './server.js';
 import {
   createLogger,
   addListener as addLoggerListener,
   finishLogger,
-} from './logger';
-import { createCacheConsumer, createCacheProvider } from './cache';
-import { publish, subscribe } from './utils';
+} from './logger/index.js';
+import { createCacheConsumer, createCacheProvider } from './cache/index.js';
+import { publish, subscribe } from './utils/index.js';
 
 enum TER_MSG {
   QUIT,

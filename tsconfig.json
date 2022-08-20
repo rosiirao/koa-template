@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
-    "module": "CommonJS",
+    "module": "nodenext",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "isolatedModules": true,
     "target": "ESNext",
     "noImplicitAny": true,
-    "moduleResolution": "node",
     "sourceMap": true,
     "outDir": "dist",
     "baseUrl": ".",
@@ -30,5 +30,10 @@
     "skipLibCheck": true
   },
   "include": ["src/**/*", "prisma/seed.group.ts"],
-  "exclude": ["node_modules", "**/*.spec.ts", "src/__test__/**"]
+  "exclude": [
+    "node_modules",
+    "**/__mocks__/**",
+    "**/*.spec.ts",
+    "src/__test__/**"
+  ]
 }

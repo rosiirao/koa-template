@@ -1,7 +1,7 @@
 // import { getLogger, createLogger, addListener } from './winston.impl';
 import Koa from 'koa';
-import logConf from './config.logger';
-import { getLogger } from './winston.impl';
+import logConf from './config.logger.js';
+import { getLogger } from './winston.impl.js';
 
 const accessLog = logConf?.ACCESS_LOG;
 const appLogger = (app: Koa): Koa.Middleware => {
@@ -55,4 +55,4 @@ const appLogger = (app: Koa): Koa.Middleware => {
 export default appLogger;
 
 // export { getLogger, createLogger, addListener };
-export * from './winston.impl';
+export * from './winston.impl.js';

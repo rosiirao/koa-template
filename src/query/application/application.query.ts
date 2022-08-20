@@ -1,7 +1,7 @@
-import prisma from '../client';
-import { LENGTH_MAX_NAME } from '../query.shared';
+import prisma from '../client.js';
+import { LENGTH_MAX_NAME } from '../query.shared.js';
 
-import { Application, PrismaPromise, Privilege } from '.prisma/client';
+import { Application, PrismaPromise, Privilege } from '@prisma/client';
 
 export const createApplication = (
   name: string

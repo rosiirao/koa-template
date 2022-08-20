@@ -6,10 +6,10 @@ import {
   refreshToken,
   register,
   verifyAuthToken,
-} from '../controllers/auth.controller';
-import { cors } from '../controllers/cors';
+} from '../controllers/auth.controller.js';
+import { cors } from '../controllers/cors.js';
 
-import { authorizeParamRoute } from './application.authorize';
+import { authorizeParamRoute } from './application.authorize.js';
 
 import body from 'koa-body';
 import compose from 'koa-compose';

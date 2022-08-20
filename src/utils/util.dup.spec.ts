@@ -1,4 +1,4 @@
-import { nextId } from './util';
+import { nextId } from './util.js';
 
 /**
  * nextId can start at 1 or a given value, and we can't test in one file for 2 cases.

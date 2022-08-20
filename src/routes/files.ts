@@ -1,7 +1,7 @@
 // 静态文件访问
 
 import config from 'config';
-import files from '../controllers/files';
+import files from '../controllers/files.js';
 import Router from '@koa/router';
 import compose from 'koa-compose';
 

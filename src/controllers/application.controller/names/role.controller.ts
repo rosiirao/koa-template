@@ -13,7 +13,7 @@ import {
   revokeUser,
   assignGroup,
   revokeGroup,
-} from '../../../query/application/names.query/role.query';
+} from '../../../query/application/names.query/role.query.js';
 
 export async function getUserRoles(applicationId: number, userId: number) {
   const roles = await listRolesOfUser(applicationId, userId);

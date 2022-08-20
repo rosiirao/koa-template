@@ -1,5 +1,5 @@
-import { IIdentityState } from '../../../app';
-import { aclRelationClause } from '../shared.application.query';
+import type { IIdentityState } from '../../../app.js';
+import { aclRelationClause } from '../shared.application.query.js';
 
 export const aclQueryInput = (
   identities: IIdentityState['identities'],

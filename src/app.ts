@@ -1,9 +1,9 @@
 import Koa from 'koa';
 
-import routes from './routes';
-import logger from './logger';
+import routes from './routes/index.js';
+import logger from './logger/index.js';
 
-import { IUserState } from './app.d';
+import type { IUserState } from './app.d.js';
 
 const startApp = (): Koa => {
   const app = new Koa<IUserState>();
@@ -52,10 +52,10 @@ const startApp = (): Koa => {
 };
 
 export default startApp;
-export {
+export type {
   IIdentityState,
   IPrivilege,
   ISubject,
   IUserState,
   AuthorizedState,
-} from './app.d';
+} from './app.d.js';

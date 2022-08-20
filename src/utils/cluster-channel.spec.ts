@@ -1,6 +1,6 @@
-import { publish, subscribe, unsubscibe } from './cluster-channel';
+import { publish, subscribe, unsubscibe } from './cluster-channel.js';
 import cluster from 'cluster';
-import createPromise from './promise-util';
+import createPromise from './promise-util.js';
 
 /**
  *  The send and message event between cluster and workers is unavailable in jest, so we have to skip this test now

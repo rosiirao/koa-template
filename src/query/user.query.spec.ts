@@ -1,17 +1,22 @@
-import { listUser } from './user.query';
+import { listUsers } from './user.query.js';
 
+const adminIdentities = { id: 1, role: [], group: [] } as const;
 describe('user.query test', () => {
   it('find all users can get all users', async () => {
     /**
      * the records in db
      */
-    const backend = (await listUser()).reduce<
-      [email: Set<string>, name: Set<string>]
-    >(
+    const [emails, names] = (
+      await listUsers({
+        applicationId: 1,
+        identities: adminIdentities,
+      })
+    ).reduce<[email: Set<string>, name: Set<string>]>(
       ([m, n], { email, name }) => (m.add(email), n.add(name), [m, n]),
       [new Set(), new Set()]
     );
 
-    expect(backend[0].size).toBe(backend[1].size);
+    expect(emails.size).toBeGreaterThan(0);
+    expect(emails.size).toBe(names.size);
   });
 });
