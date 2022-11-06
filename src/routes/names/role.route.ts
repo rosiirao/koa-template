@@ -36,7 +36,7 @@ router
       prismaErrorHandler(e);
     }
   })
-  .post('/:applicationName/role', body(), async (ctx) => {
+  .post('/:applicationName/role', body.koaBody(), async (ctx) => {
     try {
       ctx.body = await createRole(
         ctx.request.body,
@@ -59,7 +59,7 @@ router
       prismaErrorHandler(e);
     }
   })
-  .put('/:applicationName/role/:id', body(), async (ctx) => {
+  .put('/:applicationName/role/:id', body.koaBody(), async (ctx) => {
     const {
       subject: { applicationId },
     } = ctx.state;
@@ -109,11 +109,11 @@ type GrantRoleOn =
   | { group: Array<number> };
 
 router
-  .put('/:applicationName/grantRole/:id', body(), async (ctx) => {
+  .put('/:applicationName/grantRole/:id', body.koaBody(), async (ctx) => {
     const payload = ctx.request.body as GrantRoleOn;
     ctx.body = await grantRole(Number(ctx.params.id), payload);
   })
-  .patch('/:applicationName/grantRole/:id', body(), async (ctx) => {
+  .patch('/:applicationName/grantRole/:id', body.koaBody(), async (ctx) => {
     const method = requestMethod(ctx);
     const payload = ctx.request.body as GrantRoleOn;
     if (method.toLowerCase() === 'delete') {
@@ -125,7 +125,7 @@ router
     );
   });
 
-router.put('/:applicationName/privilege', body(), async (ctx) => {
+router.put('/:applicationName/privilege', body.koaBody(), async (ctx) => {
   const { assignee, privilege } = ctx.request.body;
   const {
     subject: { applicationId },

@@ -36,7 +36,7 @@ router.get('/:id?', async (ctx) => {
 });
 
 router
-  .post('/', body(), async (ctx) => {
+  .post('/', body.koaBody(), async (ctx) => {
     const data = ctx.request.body;
     if (data?.name === undefined) {
       throw createHttpError(422, 'The field *name* is required');
@@ -53,7 +53,7 @@ router
       prismaErrorHandler(e);
     }
   })
-  .put('/:id', body(), async (ctx) => {
+  .put('/:id', body.koaBody(), async (ctx) => {
     const data = ctx.request.body;
     if (data?.name === undefined) {
       throw createHttpError(422, 'The field *name* is required');

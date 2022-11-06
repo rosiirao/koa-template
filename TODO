@@ -1,4 +1,6 @@
-- complete the db push with the data preserve
+# TODO
+
+- Complete the db push with the data preserve
   [x] The applicationId of privilege assignment default set with *1*
 - API
   - Application
@@ -19,12 +21,12 @@
       [x] Revoke role on group
     - privilege
       [x] Get privileges of application
-      [x] Grant on Role 
-      [x] Revoke on Role 
-      [x] Grant on Group 
-      [x] Revoke on Group 
-      [x] Grant on User 
-      [x] Revoke on User 
+      [x] Grant on Role
+      [x] Revoke on Role
+      [x] Grant on Group
+      [x] Revoke on Group
+      [x] Grant on User
+      [x] Revoke on User
   - Group
   - User
   - Resource
@@ -33,13 +35,13 @@
     [ ] Modify resource access control list
     [x] Query resource with access control enabled
 - Blog Application
-  - [ ] Post 
+  - [ ] Post
     - [ ] Author, Reader
     - [ ] List
 - initial the administrator role
   [ ] Add *administrator* role On Application *Root*
-  [ ] Modify the privileges of *administrator* role 
+  [ ] Modify the privileges of *administrator* role
   [ ] Add Application *Test* with the role *administrator*
 - Form validation solution
-  [ ] A utility form validation solution
+  [ ] A utility for form validation solution
   

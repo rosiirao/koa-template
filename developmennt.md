@@ -20,3 +20,7 @@
 
 - SQL_LOG_LEVEL
   - the comma separated log level array of prisma client: *query*, *info*, *warn*, *error*.
+
+## issues
+
+[The `jest.mock` does not mock an es module without babel](https://github.com/facebook/jest/issues/10025)

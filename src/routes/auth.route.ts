@@ -20,11 +20,11 @@ const router = new Router({
 });
 
 router
-  .post('/login', body(), login)
-  .post('/register', body(), register)
-  .post('/change_password_auth', body(), changePasswordAuth)
-  .post('/change_password', verifyAuthToken, body(), changePassword)
-  .post('/reset_password', body(), changePassword)
+  .post('/login', body.koaBody(), login)
+  .post('/register', body.koaBody(), register)
+  .post('/change_password_auth', body.koaBody(), changePasswordAuth)
+  .post('/change_password', verifyAuthToken, body.koaBody(), changePassword)
+  .post('/reset_password', body.koaBody(), changePassword)
   .get('/refresh_token', refreshToken)
   .options('/who', (ctx) => {
     ctx.set({
