@@ -9,14 +9,14 @@ import {
   queryInput,
 } from '../../../query/query.shared.js';
 
-const typeSelector = (query?: 'user' | 'group' | 'role') => ({
-  select: {
-    user: true,
-    group: true,
-    role: true,
-  },
-  ...queryInput('select', query && { [query]: true }),
-});
+type Selector = {
+  select: { user?: true; group?: true; role?: true };
+};
+
+const typeSelector = (query?: 'user' | 'group' | 'role'): Selector =>
+  queryInput('select', query && { [query]: true }) ?? {
+    select: { user: true, group: true, role: true },
+  };
 
 export async function listNames(
   option = {} as PageOption<Prisma.UserOrderByWithAggregationInput>,
@@ -36,13 +36,13 @@ export async function listNames(
             [query]: null,
           },
         };
-  const resource = (await prisma.namesResource.findMany({
+  const resource = await prisma.namesResource.findMany({
     where: {
       ...filterType,
     },
     ...listQueryCriteria(count, skip, start, orderBy),
     ...typeSelector(query),
-  })) as Array<Record<NonNullable<typeof query>, unknown>>;
+  });
   return query !== undefined ? resource.map((v) => v[query]) : resource;
 }
 

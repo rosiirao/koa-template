@@ -33,7 +33,7 @@ export function resultExecute<T>(value: ResultExecution<T>): T {
 
 /**
  * Get a query input for an optional value.
- * If value exists and pass validator, return the query input object, or else return undefined.
+ * If value exists and passes the validator, return the query input object, or else return undefined.
  * So we can simply deconstruct it as the query parameter.
  * @example `queryInput('take', count)  // count is optional`
  */
