@@ -34,7 +34,7 @@
   "homepage": "https://github.com/rosiirao/koa-template#readme",
   "devDependencies": {
     "concurrently": "^6.2.0",
-    "nodemon": "^2.0.4",
+    "nodemon": "^2.0.20",
     "prettier": "^2.3.2"
   },
   "dependencies": {
