@@ -21,22 +21,27 @@ async function mkdirIfNoExist(p: string) {
   }
   return p;
 }
-
+type File = { path: string; name: string };
+declare module 'koa' {
+  interface Request extends Koa.BaseRequest {
+    body?: unknown;
+    files?: Record<string, File | Array<File>>;
+  }
+}
 /**
  * Is ready service to new requests
  * @param ctx
  * @param next
  */
-export const upload: Router.Middleware = async function (
-  ctx: Koa.DefaultContext
-) {
-  const { category = '' } = ctx.request.body;
+export const upload: Router.Middleware = async function (ctx: Koa.Context) {
+  const { category = '' } = ctx.request.body as Record<string, string>;
   const files = ctx.request.files;
   const dir = await (category.trim()
     ? mkdirIfNoExist(path.join(await root_temp_dir, category.trim()))
     : root_temp_dir);
 
   const filePath = (fileName: string) => path.join(dir, fileName);
+  if (!files) return;
   for (const field of Object.keys(files)) {
     const file = files[field];
     if (!Array.isArray(file)) {

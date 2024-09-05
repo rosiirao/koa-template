@@ -43,8 +43,9 @@ function fileRoute(conf: Conf) {
   });
 
   const filesServe = (path: string) => files(path, conf.root ?? '');
-  router.get('/:path+', async (ctx: Koa.DefaultContext, next: Koa.Next) => {
-    await filesServe('/' + ctx.params.path)(ctx, next);
+  router.get('/:path?', async (ctx: Koa.DefaultContext, next: Koa.Next) => {
+    const { path = 'index.html' } = ctx.params;
+    await filesServe('/' + path)(ctx, next);
   });
   return router;
 }
