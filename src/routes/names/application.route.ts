@@ -1,3 +1,4 @@
+import type Koa from 'koa';
 import Router from '@koa/router';
 import createHttpError from 'http-errors';
 import compose from 'koa-compose';
@@ -23,7 +24,7 @@ const router = authorizeRoute(
 
 authorizeApplication(router, 'names');
 
-router.get('/:id?', async (ctx) => {
+router.get('/:id?', async (ctx: Koa.DefaultContext) => {
   const { id } = ctx.params;
   const application = await getApplication(id);
 
@@ -36,7 +37,7 @@ router.get('/:id?', async (ctx) => {
 });
 
 router
-  .post('/', body.koaBody(), async (ctx) => {
+  .post('/', body.koaBody(), async (ctx: Koa.DefaultContext) => {
     const data = ctx.request.body;
     if (data?.name === undefined) {
       throw createHttpError(422, 'The field *name* is required');
@@ -53,7 +54,7 @@ router
       prismaErrorHandler(e);
     }
   })
-  .put('/:id', body.koaBody(), async (ctx) => {
+  .put('/:id', body.koaBody(), async (ctx: Koa.DefaultContext) => {
     const data = ctx.request.body;
     if (data?.name === undefined) {
       throw createHttpError(422, 'The field *name* is required');
@@ -77,7 +78,7 @@ router
       throw e;
     }
   })
-  .delete('/:id', async (ctx) => {
+  .delete('/:id', async (ctx: Koa.DefaultContext) => {
     if (ctx.state.privilege?.applicationId === undefined) {
       throw new Error(
         'The action need create privileges to *names*, use authorizeApplication before action'

@@ -1,3 +1,4 @@
+import type Koa from 'koa';
 import Router from '@koa/router';
 import createHttpError from 'http-errors';
 import compose from 'koa-compose';
@@ -20,7 +21,7 @@ const router = authorizeRoute(
 );
 
 router
-  .get('/names/:id?', async (ctx) => {
+  .get('/names/:id?', async (ctx: Koa.DefaultContext) => {
     const type = itemOfEnumerable(ctx.query.t ?? ctx.query.type);
     const { start, skip, count } = ctx.query;
 

@@ -2,6 +2,7 @@ import Router, { RouterContext } from '@koa/router';
 import 'koa-body';
 import { nanoid } from 'nanoid';
 import bcrypt from 'bcrypt';
+import type Koa from 'koa';
 
 import config from 'config';
 
@@ -56,7 +57,9 @@ import {
   updateUserCredential,
 } from '../query/user.query.js';
 
-export const register: Router.Middleware = async (ctx): Promise<void> => {
+export const register: Router.Middleware = async (
+  ctx: Koa.DefaultContext
+): Promise<void> => {
   const { password, ...rest } = ctx.request.body;
   ctx.body = await create({
     password: await hashPassword(password),
@@ -121,7 +124,9 @@ const auth = async (
  * Send Authorization token and redirect if login success, otherwise do nothing.
  * @param ctx
  */
-export const login: Router.Middleware = async function (ctx) {
+export const login: Router.Middleware = async function (
+  ctx: Koa.DefaultContext
+) {
   const { username, password /* redirectTo */ } = ctx.request.body;
   const { id } = await findUser(username, password);
 
@@ -149,8 +154,8 @@ export const login: Router.Middleware = async function (ctx) {
 };
 
 export const verifyAuthToken: Router.Middleware<IUserState> = async function (
-  ctx,
-  next
+  ctx: Koa.DefaultContext,
+  next: Koa.Next
 ) {
   if (publicKey === undefined) {
     throw createHttpError(500, new Error('Public key not found!'), {
@@ -191,7 +196,9 @@ export const verifyAuthToken: Router.Middleware<IUserState> = async function (
   return next();
 };
 
-export const refreshToken: Router.Middleware<IUserState> = async (ctx) => {
+export const refreshToken: Router.Middleware<IUserState> = async (
+  ctx: Koa.DefaultContext
+) => {
   const token = ctx.cookies.get('refresh_token');
   if (token === undefined) throw createHttpError(401);
   const credential = await findCredential({ refreshToken: token });
@@ -212,7 +219,7 @@ const challengeCacheKey = (username: IUserState['user']['name']) =>
   `auth/change_password/challenge/${username}`;
 
 export const changePasswordAuth: Router.Middleware<IUserState> = async (
-  ctx
+  ctx: Koa.DefaultContext
 ) => {
   if (privateKey === undefined) {
     throw createHttpError(500, new Error('Private key not found!'));
@@ -232,8 +239,8 @@ export const changePasswordAuth: Router.Middleware<IUserState> = async (
 };
 
 const verifyChangePassword: Router.Middleware<IUserState> = async (
-  ctx,
-  next
+  ctx: Koa.DefaultContext,
+  next: Koa.Next
 ) => {
   const token = new URLSearchParams(ctx.querystring).get('code');
   const { password } = ctx.request.body ?? {};
@@ -265,7 +272,9 @@ const verifyChangePassword: Router.Middleware<IUserState> = async (
   throw createHttpError(403, 'Operation invalid');
 };
 
-const changePassword: Router.Middleware<IUserState> = async (ctx) => {
+const changePassword: Router.Middleware<IUserState> = async (
+  ctx: Koa.DefaultContext
+) => {
   const { newPassword } = ctx.request.body;
   const { id, name } = ctx.state.user;
   if (id === undefined && name === undefined) {

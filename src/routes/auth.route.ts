@@ -14,6 +14,7 @@ import { authorizeParamRoute } from './application.authorize.js';
 import body from 'koa-body';
 import compose from 'koa-compose';
 import createHttpError from 'http-errors';
+import type Koa from 'koa';
 
 const router = new Router({
   prefix: '/auth',
@@ -26,13 +27,13 @@ router
   .post('/change_password', verifyAuthToken, body.koaBody(), changePassword)
   .post('/reset_password', body.koaBody(), changePassword)
   .get('/refresh_token', refreshToken)
-  .options('/who', (ctx) => {
+  .options('/who', (ctx: Koa.DefaultContext) => {
     ctx.set({
       'Access-Control-Allow-Headers': 'Authorization',
     });
     ctx.status = 204;
   })
-  .get('/who', verifyAuthToken, async function (ctx) {
+  .get('/who', verifyAuthToken, async function (ctx: Koa.DefaultContext) {
     ctx.body = ctx.state.user.name;
   });
 
@@ -40,7 +41,7 @@ authorizeParamRoute(router, {
   applicationName: 'applicationName',
   resourceId: 'resourceId',
 })
-  .get('/:applicationName', (ctx) => {
+  .get('/:applicationName', (ctx: Koa.DefaultContext) => {
     const applicationId = ctx.state.subject?.applicationId;
     if (applicationId === undefined)
       throw createHttpError(
@@ -49,7 +50,7 @@ authorizeParamRoute(router, {
       );
     ctx.body = ctx.state.privilege;
   })
-  .get('/:applicationName/:resourceId?', (ctx) => {
+  .get('/:applicationName/:resourceId?', (ctx: Koa.DefaultContext) => {
     const { applicationId, resourceId } = ctx.state.subject ?? {};
     if (applicationId === undefined || resourceId === undefined)
       throw createHttpError(

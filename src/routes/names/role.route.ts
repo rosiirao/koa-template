@@ -1,3 +1,4 @@
+import type Koa from 'koa';
 import Router from '@koa/router';
 import body from 'koa-body';
 import compose from 'koa-compose';
@@ -29,24 +30,28 @@ const router = authorizeParamRoute(
 );
 
 router
-  .get('/:applicationName/role', async (ctx) => {
+  .get('/:applicationName/role', async (ctx: Koa.DefaultContext) => {
     try {
       ctx.body = await findRoles(ctx.state.subject.applicationId);
     } catch (e) {
       prismaErrorHandler(e);
     }
   })
-  .post('/:applicationName/role', body.koaBody(), async (ctx) => {
-    try {
-      ctx.body = await createRole(
-        ctx.request.body,
-        ctx.state.subject.applicationId
-      );
-    } catch (e) {
-      prismaErrorHandler(e);
+  .post(
+    '/:applicationName/role',
+    body.koaBody(),
+    async (ctx: Koa.DefaultContext) => {
+      try {
+        ctx.body = await createRole(
+          ctx.request.body,
+          ctx.state.subject.applicationId
+        );
+      } catch (e) {
+        prismaErrorHandler(e);
+      }
     }
-  })
-  .get('/:applicationName/role/:id', async (ctx) => {
+  )
+  .get('/:applicationName/role/:id', async (ctx: Koa.DefaultContext) => {
     const {
       subject: { applicationId },
     } = ctx.state;
@@ -59,19 +64,27 @@ router
       prismaErrorHandler(e);
     }
   })
-  .put('/:applicationName/role/:id', body.koaBody(), async (ctx) => {
-    const {
-      subject: { applicationId },
-    } = ctx.state;
-    try {
-      ctx.body = itemOfEnumerable(
-        await updateRole(Number(ctx.params.id), ctx.request.body, applicationId)
-      );
-    } catch (e) {
-      prismaErrorHandler(e);
+  .put(
+    '/:applicationName/role/:id',
+    body.koaBody(),
+    async (ctx: Koa.DefaultContext) => {
+      const {
+        subject: { applicationId },
+      } = ctx.state;
+      try {
+        ctx.body = itemOfEnumerable(
+          await updateRole(
+            Number(ctx.params.id),
+            ctx.request.body,
+            applicationId
+          )
+        );
+      } catch (e) {
+        prismaErrorHandler(e);
+      }
     }
-  })
-  .delete('/:applicationName/role/:id', async (ctx) => {
+  )
+  .delete('/:applicationName/role/:id', async (ctx: Koa.DefaultContext) => {
     const {
       subject: { applicationId },
     } = ctx.state;
@@ -83,24 +96,34 @@ router
   });
 
 router
-  .put('/:applicationName/roleInherit/:id/:inheritTo', async (ctx) => {
-    const { id, inheritTo } = ctx.params;
-    const {
-      subject: { applicationId },
-    } = ctx.state;
-    ctx.body = await inheritRole(applicationId, Number(id), Number(inheritTo));
-  })
-  .delete('/:applicationName/roleInherit/:id/:inheritTo', async (ctx) => {
-    const { id, inheritTo } = ctx.params;
-    const {
-      subject: { applicationId },
-    } = ctx.state;
-    ctx.body = await deleteInheritRole(
-      applicationId,
-      Number(id),
-      Number(inheritTo)
-    );
-  });
+  .put(
+    '/:applicationName/roleInherit/:id/:inheritTo',
+    async (ctx: Koa.DefaultContext) => {
+      const { id, inheritTo } = ctx.params;
+      const {
+        subject: { applicationId },
+      } = ctx.state;
+      ctx.body = await inheritRole(
+        applicationId,
+        Number(id),
+        Number(inheritTo)
+      );
+    }
+  )
+  .delete(
+    '/:applicationName/roleInherit/:id/:inheritTo',
+    async (ctx: Koa.DefaultContext) => {
+      const { id, inheritTo } = ctx.params;
+      const {
+        subject: { applicationId },
+      } = ctx.state;
+      ctx.body = await deleteInheritRole(
+        applicationId,
+        Number(id),
+        Number(inheritTo)
+      );
+    }
+  );
 
 type GrantRoleOn =
   | {
@@ -109,34 +132,49 @@ type GrantRoleOn =
   | { group: Array<number> };
 
 router
-  .put('/:applicationName/grantRole/:id', body.koaBody(), async (ctx) => {
-    const payload = ctx.request.body as GrantRoleOn;
-    ctx.body = await grantRole(Number(ctx.params.id), payload);
-  })
-  .patch('/:applicationName/grantRole/:id', body.koaBody(), async (ctx) => {
-    const method = requestMethod(ctx);
-    const payload = ctx.request.body as GrantRoleOn;
-    if (method.toLowerCase() === 'delete') {
-      ctx.body = await revokeRole(Number(ctx.params.id), payload);
-      return;
+  .put(
+    '/:applicationName/grantRole/:id',
+    body.koaBody(),
+    async (ctx: Koa.DefaultContext) => {
+      const payload = ctx.request.body as GrantRoleOn;
+      ctx.body = await grantRole(Number(ctx.params.id), payload);
     }
-    throw new Error(
-      `The method ${method} is not supported. Only delete is supported`
-    );
-  });
+  )
+  .patch(
+    '/:applicationName/grantRole/:id',
+    body.koaBody(),
+    async (ctx: Koa.DefaultContext) => {
+      const method = requestMethod(ctx);
+      const payload = ctx.request.body as GrantRoleOn;
+      if (method.toLowerCase() === 'delete') {
+        ctx.body = await revokeRole(Number(ctx.params.id), payload);
+        return;
+      }
+      throw new Error(
+        `The method ${method} is not supported. Only delete is supported`
+      );
+    }
+  );
 
-router.put('/:applicationName/privilege', body.koaBody(), async (ctx) => {
-  const { assignee, privilege } = ctx.request.body;
-  const {
-    subject: { applicationId },
-  } = ctx.state;
-  await updatePrivilege(applicationId, assignee, privilege);
-  ctx.body = undefined;
-});
+router.put(
+  '/:applicationName/privilege',
+  body.koaBody(),
+  async (ctx: Koa.DefaultContext) => {
+    const { assignee, privilege } = ctx.request.body;
+    const {
+      subject: { applicationId },
+    } = ctx.state;
+    await updatePrivilege(applicationId, assignee, privilege);
+    ctx.body = undefined;
+  }
+);
 
-router.get('/:applicationName/userIdentities', async (ctx) => {
-  const { user, identities, privilege, subject } = ctx.state;
-  ctx.body = jsonStringify({ user, identities, privilege, subject }, '  ');
-});
+router.get(
+  '/:applicationName/userIdentities',
+  async (ctx: Koa.DefaultContext) => {
+    const { user, identities, privilege, subject } = ctx.state;
+    ctx.body = jsonStringify({ user, identities, privilege, subject }, '  ');
+  }
+);
 
 export default compose([router.routes(), router.allowedMethods()]);

@@ -1,3 +1,4 @@
+import type Koa from 'koa';
 import Router from '@koa/router';
 // import package from '../../package';
 
@@ -15,7 +16,9 @@ let healthStatus = true,
  * @param ctx
  * @param next
  */
-export const healthz: Router.Middleware = async function (ctx) {
+export const healthz: Router.Middleware = async function (
+  ctx: Koa.DefaultContext
+) {
   let available = 200,
     message;
 
@@ -37,7 +40,9 @@ export const healthz: Router.Middleware = async function (ctx) {
  * @param ctx
  * @param next
  */
-export const readyz: Router.Middleware = async function readyz(ctx) {
+export const readyz: Router.Middleware = async function readyz(
+  ctx: Koa.DefaultContext
+) {
   let available = 200,
     message;
 
@@ -73,7 +78,9 @@ export function setReady(status = true): void {
 /**
  * Get version of app
  */
-export const version: Router.Middleware = async function version(ctx) {
+export const version: Router.Middleware = async function version(
+  ctx: Koa.DefaultContext
+) {
   ctx.body = {
     name: name,
     version: ver,

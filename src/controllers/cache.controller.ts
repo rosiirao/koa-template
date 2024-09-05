@@ -1,8 +1,11 @@
+import type Koa from 'koa';
 import createHttpError from 'http-errors';
-import Koa from 'koa';
 import { clusterCache } from '../cache/index.js';
 
-export const cache: Koa.Middleware = async (ctx, next): Promise<void> => {
+export const cache: Koa.Middleware = async (
+  ctx: Koa.DefaultContext,
+  next: Koa.Next
+): Promise<void> => {
   const query = new URLSearchParams(ctx.querystring);
   if (!query.has('key')) {
     throw createHttpError(422, 'The key in query can not empty');

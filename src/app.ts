@@ -7,7 +7,7 @@ import type { IUserState } from './app.d.js';
 
 const startApp = (): Koa => {
   const app = new Koa<IUserState>();
-  app.use(async (ctx, next) => {
+  app.use(async (ctx: Koa.DefaultContext, next: Koa.Next) => {
     await next().catch((err) => {
       ctx.throw(err.statusCode || err.status || 500, err);
     });
@@ -17,7 +17,7 @@ const startApp = (): Koa => {
   /**
    * redirect to index.html
    */
-  app.use(async (ctx, next) => {
+  app.use(async (ctx: Koa.DefaultContext, next: Koa.Next) => {
     if (ctx.path === '/' || ctx.path === '') {
       ctx.status = 301;
       ctx.set('location', `${ctx.origin}/index.html`);
@@ -29,7 +29,7 @@ const startApp = (): Koa => {
   /**
    * An example for testing xhr progress
    */
-  app.use(async (ctx, next) => {
+  app.use(async (ctx: Koa.DefaultContext, next: Koa.Next) => {
     if (ctx.path === '/progress') {
       ctx.res.writeHead(200, {
         'Content-Length': Buffer.byteLength('中', 'utf-8') * 5000,

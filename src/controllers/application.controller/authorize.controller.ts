@@ -1,7 +1,7 @@
+import type Koa from 'koa';
 import { Prisma, Privilege } from '@prisma/client';
 import Router from '@koa/router';
 import createHttpError from 'http-errors';
-import Koa from 'koa';
 import { listRolesOfUser } from '../../query/application/names.query/role.query.js';
 import { listGroupsOfUser } from '../../query/group.query.js';
 import { listPrivilegeAssignments } from '../../query/application/privilege.query.js';
@@ -263,8 +263,8 @@ export async function getPrivileges(
 }
 
 export const authorize: Router.Middleware<AuthorizedState> = async (
-  ctx,
-  next
+  ctx: Koa.DefaultContext,
+  next: Koa.Next
 ) => {
   const { id } = ctx.state.user;
   if (id === undefined) {

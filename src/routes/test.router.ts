@@ -1,3 +1,4 @@
+import type Koa from 'koa';
 import Router from '@koa/router';
 import createHttpError from 'http-errors';
 import compose from 'koa-compose';
@@ -11,7 +12,7 @@ const router = new Router({
 router.get('/cache', cache);
 
 router
-  .get('/group/:id', async (ctx) => {
+  .get('/group/:id', async (ctx: Koa.DefaultContext) => {
     const { id } = ctx.params;
 
     const group = await getGroupFullName(Number(id));
@@ -22,7 +23,7 @@ router
     ctx.body = JSON.stringify(group, null, '  ');
     return group;
   })
-  .get('/gMember/:id', async (ctx) => {
+  .get('/gMember/:id', async (ctx: Koa.DefaultContext) => {
     const { id } = ctx.params;
 
     const group = await getGroupMember(Number(id));

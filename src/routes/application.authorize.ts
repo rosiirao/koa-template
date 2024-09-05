@@ -11,6 +11,7 @@ import { AuthorizedState } from '../app.js';
 
 import Router from '@koa/router';
 import { match } from 'path-to-regexp';
+import type Koa from 'koa';
 
 /**
  * Authorize router with the optional applicationName and resourceId in path
@@ -58,7 +59,7 @@ export function authorizeRoute(
   router.use(verifyAuthToken).use(authorize);
   if (path === undefined) return router;
 
-  router.use(async (ctx, next) => {
+  router.use(async (ctx: Koa.DefaultContext, next: Koa.Next) => {
     const matched = match<Record<string, string>>(path.parameterizedPath, {
       end: true,
     })(ctx.path);
@@ -102,7 +103,7 @@ export function authorizeApplication(
   route: Router<AuthorizedState>,
   name: string
 ) {
-  route.use(async (ctx, next) => {
+  route.use(async (ctx: Koa.DefaultContext, next: Koa.Next) => {
     ctx.state = {
       ...ctx.state,
       ...(await authorizeApplicationState(name, ctx.state, requestMethod(ctx))),

@@ -28,7 +28,7 @@ const appLogger = (app: Koa): Koa.Middleware => {
     });
   });
 
-  return async (ctx, next): Promise<void> => {
+  return async (ctx: Koa.DefaultContext, next: Koa.Next): Promise<void> => {
     let time;
     if (accessLog) {
       time = process.hrtime();

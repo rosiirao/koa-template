@@ -1,3 +1,4 @@
+import type Koa from 'koa';
 import Router from '@koa/router';
 import createHttpError from 'http-errors';
 import compose from 'koa-compose';
@@ -21,7 +22,7 @@ authorizeRoute(
 );
 
 router
-  .get('/names/:id?', async (ctx) => {
+  .get('/names/:id?', async (ctx: Koa.DefaultContext) => {
     const user = await findUser(ctx.state.subject, ctx.state.identities);
 
     if (user == undefined) {

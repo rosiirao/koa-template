@@ -1,4 +1,4 @@
-import { Application, Prisma, Role } from '@prisma/client';
+import { Application, Role } from '@prisma/client';
 import {
   createMany as createRole,
   inheritTo,

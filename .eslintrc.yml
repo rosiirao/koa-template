@@ -18,3 +18,9 @@ extends:
   - 'plugin:@typescript-eslint/recommended'
 rules:
   '@typescript-eslint/no-non-null-assertion': 0
+ignores:
+  - 'dist/*'
+  - 'coverage/*'
+  - '**/*.d.ts'
+  - '/src/public/'
+  - '/src/types/'
