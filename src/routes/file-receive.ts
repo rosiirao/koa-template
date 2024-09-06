@@ -21,7 +21,7 @@ async function mkdirIfNoExist(p: string) {
   }
   return p;
 }
-type File = { path: string; name: string };
+type File = { filepath: string; originalFilename: string };
 declare module 'koa' {
   interface Request extends Koa.BaseRequest {
     body?: unknown;
@@ -33,7 +33,7 @@ declare module 'koa' {
  * @param ctx
  * @param next
  */
-export const upload: Router.Middleware = async function (ctx: Koa.Context) {
+export const upload: Koa.Middleware = async function (ctx: Koa.Context) {
   const { category = '' } = ctx.request.body as Record<string, string>;
   const files = ctx.request.files;
   const dir = await (category.trim()
@@ -41,17 +41,18 @@ export const upload: Router.Middleware = async function (ctx: Koa.Context) {
     : root_temp_dir);
 
   const filePath = (fileName: string) => path.join(dir, fileName);
+  console.info('--- check upload path:', dir)
   if (!files) return;
   for (const field of Object.keys(files)) {
     const file = files[field];
     if (!Array.isArray(file)) {
-      await fs.copyFile(file.path, filePath(file.name));
-      fs.rm(file.path);
+      await fs.copyFile(file.filepath, filePath(file.originalFilename));
+      fs.rm(file.filepath);
       continue;
     }
     for (const f of file) {
-      await fs.copyFile(f.path, filePath(f.name));
-      fs.rm(f.path);
+      await fs.copyFile(f.filepath, filePath(f.originalFilename));
+      fs.rm(f.filepath);
     }
   }
 
