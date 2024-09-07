@@ -13,7 +13,7 @@ import {
   authorizeApplication,
   authorizeRoute,
 } from '../application.authorize.js';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/index.js';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library.js';
 import { prismaErrorHandler } from '../shared.route.js';
 
 const router = authorizeRoute(

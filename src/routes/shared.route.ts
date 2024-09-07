@@ -1,4 +1,4 @@
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/index.js';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library.js';
 import createHttpError from 'http-errors';
 
 export function prismaErrorHandler(e: unknown) {

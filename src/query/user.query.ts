@@ -68,12 +68,12 @@ export const create = async ({
       email,
       ...(groupId.length > 0
         ? {
-            group: {
-              createMany: {
-                data: groupId,
-              },
+          group: {
+            createMany: {
+              data: groupId,
             },
-          }
+          },
+        }
         : undefined),
       credential: {
         create: {
@@ -139,7 +139,7 @@ export function listUsers(
 }
 
 export function findUnique(uniqueInput: {
-  id?: number;
+  id: number;
   email?: string;
 }): PrismaPromise<UserResult | null> {
   return prisma.user.findUnique({
@@ -153,9 +153,8 @@ export function findUnique(uniqueInput: {
 
 export function findUserCredential(
   uniqueInput: {
-    id?: number;
-    email?: string;
-  },
+    id: number; email?: string;
+  } | { email: string },
   field = ['password' as keyof Credential]
 ): PrismaPromise<
   (Partial<User> & { credential: Partial<Credential> | null }) | null
@@ -174,19 +173,19 @@ export async function updateUserCredential(
   id: number | { email: string },
   data:
     | {
-        password: string;
-      }
+      password: string;
+    }
     | {
-        refreshToken: string;
-        refreshTokenExp: Date;
-      }
+      refreshToken: string;
+      refreshTokenExp: Date;
+    }
 ): Promise<{ id: number }> {
   const query: { id: number } | { email: string } =
     typeof id === 'number'
       ? { id }
       : {
-          email: id.email,
-        };
+        email: id.email,
+      };
 
   return prisma.user.update({
     where: query,
@@ -200,9 +199,9 @@ export async function updateUserCredential(
 }
 
 export function findCredential(uniqueInput: {
-  userId?: number;
+  userId: number;
   refreshToken?: string;
-}): PrismaPromise<Credential | null> {
+} | { refreshToken: string }): PrismaPromise<Credential | null> {
   return prisma.credential.findUnique({
     where: uniqueInput,
   });

@@ -55,7 +55,7 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "@prisma/client": "^4.1.1",
+    "@prisma/client": "^5.19.1",
     "bcrypt": "^5.0.1",
     "config": "^3.3.1",
     "debug": "^4.1.1",
@@ -68,7 +68,7 @@
     "koa-send": "^5.0.1",
     "nanoid": "^4.0.0",
     "node-cache": "^5.1.2",
-    "prisma": "^4.1.1",
+    "prisma": "^5.19.1",
     "supertest": "^6.1.6",
     "winston": "^3.3.3",
     "winston-daily-rotate-file": "^4.5.5"
