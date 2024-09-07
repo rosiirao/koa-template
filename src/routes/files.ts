@@ -1,6 +1,5 @@
 // 静态文件访问
 
-import type Koa from 'koa';
 import config from 'config';
 import files from '../controllers/files.js';
 import Router from '@koa/router';
@@ -43,7 +42,7 @@ function fileRoute(conf: Conf) {
   });
 
   const filesServe = (path: string) => files(path, conf.root ?? '');
-  router.get('/:path?', async (ctx: Koa.DefaultContext, next: Koa.Next) => {
+  router.get('/:path?', async (ctx, next) => {
     const { path = 'index.html' } = ctx.params;
     await filesServe('/' + path)(ctx, next);
   });

@@ -1,22 +1,25 @@
 {
   "compilerOptions": {
-    "module": "nodenext",
+    "module": "NodeNext",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "isolatedModules": true,
     "target": "ESNext",
     "noImplicitAny": true,
-    "sourceMap": true,
+    "sourceMap": false,
+    "removeComments": true,
     "outDir": "dist",
     "baseUrl": ".",
     "paths": {
-      "*": ["node_modules/*", "src/types/*"]
+      "conf: Koa.DefaultContextigs/*": [
+        "./configs/*"
+      ]
     },
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "resolveJsonModule": true,
     "experimentalDecorators": true,
-
+    "emitDecoratorMetadata": true,
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     "declaration": true,
@@ -27,9 +30,20 @@
     "pretty": true,
     "strict": true,
     "exactOptionalPropertyTypes": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "lib": [
+      "ESNext"
+    ],
+    "preserveConstEnums": true,
+    "typeRoots": [
+      "node_modules/@types",
+      "typings"
+    ],
   },
-  "include": ["src/**/*", "prisma/seed.group.ts"],
+  "include": [
+    "src/**/*",
+    "prisma/seed.group.ts"
+  ],
   "exclude": [
     "node_modules",
     "**/__mocks__/**",

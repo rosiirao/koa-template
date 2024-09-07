@@ -4,7 +4,7 @@ import body from 'koa-body';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import type Koa from 'koa';
+import type { Request } from 'koa';
 
 const router = new Router({
   prefix: '/api',
@@ -21,19 +21,24 @@ async function mkdirIfNoExist(p: string) {
   }
   return p;
 }
-type File = { filepath: string; originalFilename: string };
-declare module 'koa' {
-  interface Request extends Koa.BaseRequest {
-    body?: unknown;
-    files?: Record<string, File | Array<File>>;
-  }
+
+type Files = NonNullable<Request['files']>[0];
+type E<T> = T extends (infer _)[] ? T[number] : T
+type File = E<Files>
+
+let alt_count = 0
+function filenameOf(file: File, altname?: string): string {
+  const date = new Date()
+  const basename = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
+  return file.originalFilename ?? `${basename}--${altname}-${++alt_count}`;
 }
+
 /**
  * Is ready service to new requests
  * @param ctx
  * @param next
  */
-export const upload: Koa.Middleware = async function (ctx: Koa.Context) {
+export const upload: Router.Middleware = async function (ctx) {
   const { category = '' } = ctx.request.body as Record<string, string>;
   const files = ctx.request.files;
   const dir = await (category.trim()
@@ -46,12 +51,12 @@ export const upload: Koa.Middleware = async function (ctx: Koa.Context) {
   for (const field of Object.keys(files)) {
     const file = files[field];
     if (!Array.isArray(file)) {
-      await fs.copyFile(file.filepath, filePath(file.originalFilename));
+      await fs.copyFile(file.filepath, filePath(filenameOf(file, field)));
       fs.rm(file.filepath);
       continue;
     }
     for (const f of file) {
-      await fs.copyFile(f.filepath, filePath(f.originalFilename));
+      await fs.copyFile(f.filepath, filePath(filenameOf(f, field)));
       fs.rm(f.filepath);
     }
   }

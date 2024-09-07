@@ -127,8 +127,8 @@ router
 
 type GrantRoleOn =
   | {
-      user: Array<number>;
-    }
+    user: Array<number>;
+  }
   | { group: Array<number> };
 
 router
@@ -143,7 +143,7 @@ router
   .patch(
     '/:applicationName/grantRole/:id',
     body.koaBody(),
-    async (ctx: Koa.DefaultContext) => {
+    async (ctx) => {
       const method = requestMethod(ctx);
       const payload = ctx.request.body as GrantRoleOn;
       if (method.toLowerCase() === 'delete') {
@@ -159,7 +159,7 @@ router
 router.put(
   '/:applicationName/privilege',
   body.koaBody(),
-  async (ctx: Koa.DefaultContext) => {
+  async (ctx) => {
     const { assignee, privilege } = ctx.request.body;
     const {
       subject: { applicationId },
@@ -171,7 +171,7 @@ router.put(
 
 router.get(
   '/:applicationName/userIdentities',
-  async (ctx: Koa.DefaultContext) => {
+  async (ctx) => {
     const { user, identities, privilege, subject } = ctx.state;
     ctx.body = jsonStringify({ user, identities, privilege, subject }, '  ');
   }

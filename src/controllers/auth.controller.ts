@@ -125,7 +125,7 @@ const auth = async (
  * @param ctx
  */
 export const login: Router.Middleware = async function (
-  ctx: Koa.DefaultContext
+  ctx
 ) {
   const { username, password /* redirectTo */ } = ctx.request.body;
   const { id } = await findUser(username, password);
@@ -154,7 +154,7 @@ export const login: Router.Middleware = async function (
 };
 
 export const verifyAuthToken: Router.Middleware<IUserState> = async function (
-  ctx: Koa.DefaultContext,
+  ctx,
   next: Koa.Next
 ) {
   if (publicKey === undefined) {
@@ -197,7 +197,7 @@ export const verifyAuthToken: Router.Middleware<IUserState> = async function (
 };
 
 export const refreshToken: Router.Middleware<IUserState> = async (
-  ctx: Koa.DefaultContext
+  ctx
 ) => {
   const token = ctx.cookies.get('refresh_token');
   if (token === undefined) throw createHttpError(401);

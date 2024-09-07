@@ -103,7 +103,7 @@ export function authorizeApplication(
   route: Router<AuthorizedState>,
   name: string
 ) {
-  route.use(async (ctx: Koa.DefaultContext, next: Koa.Next) => {
+  route.use(async (ctx, next) => {
     ctx.state = {
       ...ctx.state,
       ...(await authorizeApplicationState(name, ctx.state, requestMethod(ctx))),
