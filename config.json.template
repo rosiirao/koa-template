@@ -24,6 +24,9 @@
         "files": {                // The array can be used to serve multiple paths
             "path": "/static",    // Can't be empty string, default is "/files"
             "root": "public"      // The root static file path, if empty the services will not work
+        },
+        "upload": {               // `/api/upload` service configuration
+            "local_path": "dist/upload"
         }
     },
     "auth": {

@@ -2,16 +2,27 @@ import Router from '@koa/router';
 import compose from 'koa-compose';
 import body from 'koa-body';
 import fs from 'node:fs/promises';
-import os from 'node:os';
 import path from 'node:path';
 import type { Request } from 'koa';
+
+import config from 'config';
+import createHttpError from 'http-errors';
+
+
+type Conf = {
+  local_path?: string;
+}
+
+const conf: Conf | undefined = config.has('services.upload')
+  ? config.get('services.upload')
+  : undefined;
 
 const router = new Router({
   prefix: '/api',
 });
 
-const p = path.join(os.tmpdir(), 'com.notacup.koatpl');
-const root_temp_dir = mkdirIfNoExist(p);
+const p = !conf?.local_path ? undefined : path.resolve((conf.local_path.startsWith('/') ? '.' : '') + conf.local_path);
+const root_temp_dir = p ? mkdirIfNoExist(p) : undefined;
 
 async function mkdirIfNoExist(p: string) {
   try {
@@ -39,6 +50,7 @@ function filenameOf(file: File, altname?: string): string {
  * @param next
  */
 export const upload: Router.Middleware = async function (ctx) {
+  if (!root_temp_dir) throw createHttpError(503);
   const { category = '' } = ctx.request.body as Record<string, string>;
   const files = ctx.request.files;
   const dir = await (category.trim()
@@ -46,7 +58,6 @@ export const upload: Router.Middleware = async function (ctx) {
     : root_temp_dir);
 
   const filePath = (fileName: string) => path.join(dir, fileName);
-  console.info('--- check upload path:', dir)
   if (!files) return;
   for (const field of Object.keys(files)) {
     const file = files[field];

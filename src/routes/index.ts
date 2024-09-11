@@ -3,7 +3,7 @@ import auth from './auth.route.js';
 import files from './files.js';
 import names from './names/index.js';
 import test from './test.router.js';
-import fileReceive from './file-receive.js';
+import fileReceive from './file-upload.js';
 
 import compose from 'koa-compose';
 
