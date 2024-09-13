@@ -2,8 +2,10 @@ import Koa from 'koa';
 
 import routes from './routes/index.js';
 import logger from './logger/index.js';
+import config from 'config';
 
 import type { IUserState } from './app.d.js';
+
 
 const startApp = (): Koa => {
   const app = new Koa<IUserState>();
@@ -15,12 +17,13 @@ const startApp = (): Koa => {
   app.use(logger(app));
 
   /**
-   * redirect to index.html
+   * redirect to homepage
    */
   app.use(async (ctx: Koa.DefaultContext, next: Koa.Next) => {
     if (ctx.path === '/' || ctx.path === '') {
       ctx.status = 301;
-      ctx.set('location', `${ctx.origin}/index.html`);
+      const homepage = config.has("homepage") ? config.get<string>('homepage').replace(/^(\/|\.\/)/, '') : 'index.html'
+      ctx.set('location', `${ctx.origin}/${homepage}`);
       return;
     }
     await next();

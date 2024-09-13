@@ -16,6 +16,7 @@
         "CERT_FILE": "/certificate_path.pem",
         "CERT_KEY_FILE": "/certificate_key_path.key"
     },
+    "homepage": "/app/",
     "log": {
         "ACCESS_LOG": false,
         "LOG_MAX_FILES": "14d"
