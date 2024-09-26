@@ -17,6 +17,7 @@
         "CERT_KEY_FILE": "/certificate_key_path.key"
     },
     "homepage": "/app/",
+    "favicon": "/favicon.ico",
     "log": {
         "ACCESS_LOG": false,
         "LOG_MAX_FILES": "14d"

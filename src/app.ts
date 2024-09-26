@@ -29,6 +29,8 @@ const startApp = (): Koa => {
     await next();
   });
 
+  app.use(favicon);
+
   /**
    * An example for testing xhr progress
    */
@@ -51,8 +53,25 @@ const startApp = (): Koa => {
   });
 
   app.use(routes);
+
+  app.use(() => {
+    throw createHttpError(404, 'Not found');
+  })
   return app;
 };
+
+import send from 'koa-send';
+import createHttpError from 'http-errors';
+const favicon: Koa.Middleware = async (ctx, next) => {
+  if (ctx.path === '/favicon.ico') {
+    const favicon = config.has('favicon') ? config.get<string>('favicon') : undefined;
+    if (!favicon) {
+      throw createHttpError(404, 'Not found');
+    }
+    return send(ctx, favicon, { root: './dist' })
+  }
+  return next();
+}
 
 export default startApp;
 export type {
