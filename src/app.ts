@@ -54,9 +54,6 @@ const startApp = (): Koa => {
 
   app.use(routes);
 
-  app.use(() => {
-    throw createHttpError(404, 'Not found');
-  })
   return app;
 };
 
