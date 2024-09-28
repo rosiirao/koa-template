@@ -8,6 +8,13 @@ Use _.env_ to set development environment variable.
 
 Run `npm test` to test project.
 
+### debug
+
+Set below options to make [debug work in VS Code](https://code.visualstudio.com/docs/typescript/typescript-debugging):
+
+1. make *sourceMap* to be truth in the ts compile options
+2. set *program* property to be the entry file(*${workspaceFolder}/src/main.ts*) in debug configuration
+
 ## configuration
 
 The project use [node-config](https://github.com/lorenwest/node-config) to organizes configurations.
@@ -19,8 +26,9 @@ Set *services.files* in configuration to supply the static files service
 ## default routes
 
 - `/api`: the service for kube controller: healthz, readyz, version
+    - `/api/upload`: upload files to the indicated category(submitted field in the same form)
 - `/file`: the static files service. Set the *public* and *root* path in *config.json*
-- `/auth`: for auth example.
+- `/auth`: for auth example
 
 ## koa knowledge
 
