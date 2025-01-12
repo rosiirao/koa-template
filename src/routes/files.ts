@@ -6,7 +6,9 @@ import Router from '@koa/router';
 import compose from 'koa-compose';
 
 type Conf = {
+  /** the publicPath in browser access url, 浏览器访问路径  */
   path?: string;
+  /** the static files directory pah, 静态文件目录 */
   root?: string;
 };
 
@@ -42,7 +44,7 @@ function fileRoute(conf: Conf) {
   });
 
   const filesServe = (path: string) => files(path, conf.root ?? '');
-  router.get('/:path?', async (ctx, next) => {
+  router.get('/:path*', async (ctx, next) => {
     const { path = 'index.html' } = ctx.params;
     await filesServe('/' + path)(ctx, next);
   });
