@@ -5,11 +5,11 @@ import cluster from 'cluster';
 
 const appConf:
   | {
-      NAME: string;
-    }
+    NAME: string;
+  }
   | undefined = config.has('application')
-  ? config.get('application')
-  : undefined;
+    ? config.get('application')
+    : undefined;
 const appName = appConf?.NAME ?? 'koaApplication';
 process.title = cluster.isPrimary ? appName : `${appName}-ser`;
 
