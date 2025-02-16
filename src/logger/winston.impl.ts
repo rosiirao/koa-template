@@ -1,5 +1,5 @@
 /**
- *
+ * @file
  * separate logs to different log files.
  */
 
@@ -14,7 +14,7 @@ import cluster from 'cluster';
 const { errors, printf, combine } = winston.format;
 const errorsFormat = errors({ stack: true });
 
-type MyTransformFunction = <T extends winston.LogEntry>(
+type MyTransformFunction = <T extends winston.Logform.TransformableInfo>(
   info: T,
   opt?: DailyRotateFileTransportOptions
 ) => boolean | T;
@@ -49,7 +49,7 @@ const plainFormat = printf((info) => {
     path,
     ...meta
   } = info;
-  const paddingComputed = (padding && padding[level]) ?? ' ';
+  const paddingComputed: string = (padding && (padding as Record<string, string>)[level]) as string | undefined ?? ' ';
   const printStack = [pid, level];
   if (path !== undefined) {
     printStack.push(path);
@@ -76,12 +76,12 @@ const ignoreFormatWrapper = (
     'levelsOnly' in options && options.levelsOnly
       ? (info) => (info.level === level ? info : false)
       : 'ignoreLevels' in options
-      ? (info) => (options.ignoreLevels?.includes(info.level) ? false : info)
-      : undefined;
+        ? (info) => (options.ignoreLevels?.includes(info.level) ? false : info)
+        : undefined;
   if (ignoreTransform === undefined) {
     throw new Error('Log ignore options cant not be empty');
   }
-  return ignoreTransform && winston.format(ignoreTransform)();
+  return ignoreTransform && winston.format(ignoreTransform as winston.Logform.TransformFunction)();
 };
 
 /**
@@ -131,14 +131,14 @@ const createFileTransport = function (
  */
 const sendTransform =
   (messageType = DEFAULT_MESSAGE_TYPE) =>
-  (info: winston.LogEntry): false => {
-    process.send?.({
-      type: messageType,
-      timestamp: timestampFormatter.format(new Date()),
-      payload: Object.assign(info, { pid: process.pid }),
-    });
-    return false;
-  };
+    (info: winston.Logform.TransformableInfo): false => {
+      process.send?.({
+        type: messageType,
+        timestamp: timestampFormatter.format(new Date()),
+        payload: Object.assign(info, { pid: process.pid }),
+      });
+      return false;
+    };
 
 /**
  * logger is a winston.Logger instance wrapper, use createLogger create an instance before use it.
